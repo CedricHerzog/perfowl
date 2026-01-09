@@ -1,0 +1,19 @@
+services:
+  perfowl-mcp:
+    build: .
+    image: perfowl-mcp:latest
+    stdin_open: true
+    tty: false
+    volumes:
+      # Mount local profiles directory (read-only)
+      - ./sample:/profiles:ro
+      # Or mount a custom path:
+      # - /path/to/your/profiles:/profiles:ro
+    environment:
+      - TZ=UTC
+    # Resource limits for safety
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
