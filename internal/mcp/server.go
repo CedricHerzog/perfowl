@@ -2,10 +2,10 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/CedricHerzog/perfowl/internal/analyzer"
+	"github.com/CedricHerzog/perfowl/internal/format/toon"
 	"github.com/CedricHerzog/perfowl/internal/parser"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -168,12 +168,12 @@ func (pos *PerfOwlServer) handleGetSummary(ctx context.Context, req mcp.CallTool
 	}
 
 	summary := buildSummary(profile)
-	jsonBytes, err := json.MarshalIndent(summary, "", "  ")
+	output, err := toon.Encode(summary)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal summary: %w", err)
+		return nil, fmt.Errorf("failed to encode summary: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleGetBottlenecks(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -207,12 +207,12 @@ func (pos *PerfOwlServer) handleGetBottlenecks(ctx context.Context, req mcp.Call
 		Bottlenecks: bottlenecks,
 	}
 
-	jsonBytes, err := json.MarshalIndent(report, "", "  ")
+	output, err := toon.Encode(report)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal bottlenecks: %w", err)
+		return nil, fmt.Errorf("failed to encode bottlenecks: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleGetMarkers(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -258,19 +258,19 @@ func (pos *PerfOwlServer) handleGetMarkers(ctx context.Context, req mcp.CallTool
 
 	stats := parser.GetMarkerStats(filtered)
 
-	output := map[string]interface{}{
+	markerOutput := map[string]interface{}{
 		"total_count": len(allMarkers),
 		"filtered":    len(filtered),
 		"stats":       stats,
 		"markers":     filtered,
 	}
 
-	jsonBytes, err := json.MarshalIndent(output, "", "  ")
+	output, err := toon.Encode(markerOutput)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal markers: %w", err)
+		return nil, fmt.Errorf("failed to encode markers: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleAnalyzeExtension(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -297,12 +297,12 @@ func (pos *PerfOwlServer) handleAnalyzeExtension(ctx context.Context, req mcp.Ca
 		report.Extensions = filtered
 	}
 
-	jsonBytes, err := json.MarshalIndent(report, "", "  ")
+	output, err := toon.Encode(report)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal extension report: %w", err)
+		return nil, fmt.Errorf("failed to encode extension report: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleAnalyzeProfile(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -332,12 +332,12 @@ func (pos *PerfOwlServer) handleAnalyzeProfile(ctx context.Context, req mcp.Call
 		"extensions":  extensions,
 	}
 
-	jsonBytes, err := json.MarshalIndent(fullReport, "", "  ")
+	output, err := toon.Encode(fullReport)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal full report: %w", err)
+		return nil, fmt.Errorf("failed to encode full report: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 // Helper types and functions
@@ -383,12 +383,12 @@ func (pos *PerfOwlServer) handleGetCallTree(ctx context.Context, req mcp.CallToo
 
 	analysis := analyzer.AnalyzeCallTree(profile, threadName, limit)
 
-	jsonBytes, err := json.MarshalIndent(analysis, "", "  ")
+	output, err := toon.Encode(analysis)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal call tree: %w", err)
+		return nil, fmt.Errorf("failed to encode call tree: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleGetCategoryBreakdown(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -409,12 +409,12 @@ func (pos *PerfOwlServer) handleGetCategoryBreakdown(ctx context.Context, req mc
 
 	breakdown := analyzer.AnalyzeCategories(profile, threadName)
 
-	jsonBytes, err := json.MarshalIndent(breakdown, "", "  ")
+	output, err := toon.Encode(breakdown)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal category breakdown: %w", err)
+		return nil, fmt.Errorf("failed to encode category breakdown: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleGetThreadAnalysis(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -430,12 +430,12 @@ func (pos *PerfOwlServer) handleGetThreadAnalysis(ctx context.Context, req mcp.C
 
 	analysis := analyzer.AnalyzeThreads(profile)
 
-	jsonBytes, err := json.MarshalIndent(analysis, "", "  ")
+	output, err := toon.Encode(analysis)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal thread analysis: %w", err)
+		return nil, fmt.Errorf("failed to encode thread analysis: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleCompareProfiles(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -461,12 +461,12 @@ func (pos *PerfOwlServer) handleCompareProfiles(ctx context.Context, req mcp.Cal
 
 	diff := analyzer.CompareProfiles(baseline, comparison)
 
-	jsonBytes, err := json.MarshalIndent(diff, "", "  ")
+	output, err := toon.Encode(diff)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal comparison: %w", err)
+		return nil, fmt.Errorf("failed to encode comparison: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 // Helper types and functions
@@ -511,12 +511,12 @@ func (pos *PerfOwlServer) handleAnalyzeWorkers(ctx context.Context, req mcp.Call
 
 	analysis := analyzer.AnalyzeWorkers(profile)
 
-	jsonBytes, err := json.MarshalIndent(analysis, "", "  ")
+	output, err := toon.Encode(analysis)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal worker analysis: %w", err)
+		return nil, fmt.Errorf("failed to encode worker analysis: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleAnalyzeCrypto(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -532,12 +532,12 @@ func (pos *PerfOwlServer) handleAnalyzeCrypto(ctx context.Context, req mcp.CallT
 
 	analysis := analyzer.AnalyzeCrypto(profile)
 
-	jsonBytes, err := json.MarshalIndent(analysis, "", "  ")
+	output, err := toon.Encode(analysis)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal crypto analysis: %w", err)
+		return nil, fmt.Errorf("failed to encode crypto analysis: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleAnalyzeJSCrypto(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -553,12 +553,12 @@ func (pos *PerfOwlServer) handleAnalyzeJSCrypto(ctx context.Context, req mcp.Cal
 
 	analysis := analyzer.AnalyzeJSCrypto(profile)
 
-	jsonBytes, err := json.MarshalIndent(analysis, "", "  ")
+	output, err := toon.Encode(analysis)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal JS crypto analysis: %w", err)
+		return nil, fmt.Errorf("failed to encode JS crypto analysis: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleAnalyzeContention(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -574,12 +574,12 @@ func (pos *PerfOwlServer) handleAnalyzeContention(ctx context.Context, req mcp.C
 
 	analysis := analyzer.AnalyzeContention(profile)
 
-	jsonBytes, err := json.MarshalIndent(analysis, "", "  ")
+	output, err := toon.Encode(analysis)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal contention analysis: %w", err)
+		return nil, fmt.Errorf("failed to encode contention analysis: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleAnalyzeScaling(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -595,12 +595,12 @@ func (pos *PerfOwlServer) handleAnalyzeScaling(ctx context.Context, req mcp.Call
 
 	analysis := analyzer.AnalyzeScaling(profile)
 
-	jsonBytes, err := json.MarshalIndent(analysis, "", "  ")
+	output, err := toon.Encode(analysis)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal scaling analysis: %w", err)
+		return nil, fmt.Errorf("failed to encode scaling analysis: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
 
 func (pos *PerfOwlServer) handleCompareScaling(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -626,10 +626,10 @@ func (pos *PerfOwlServer) handleCompareScaling(ctx context.Context, req mcp.Call
 
 	result := analyzer.CompareScaling(baseline, comparison)
 
-	jsonBytes, err := json.MarshalIndent(result, "", "  ")
+	output, err := toon.Encode(result)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal scaling comparison: %w", err)
+		return nil, fmt.Errorf("failed to encode scaling comparison: %w", err)
 	}
 
-	return mcp.NewToolResultText(string(jsonBytes)), nil
+	return mcp.NewToolResultText(output), nil
 }
