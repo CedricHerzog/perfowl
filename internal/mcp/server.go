@@ -2,9 +2,13 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/CedricHerzog/perfowl/internal/analyzer"
+	"github.com/CedricHerzog/perfowl/internal/chart"
 	"github.com/CedricHerzog/perfowl/internal/format/toon"
 	"github.com/CedricHerzog/perfowl/internal/parser"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -147,6 +151,46 @@ func (pos *PerfOwlServer) registerTools() {
 		mcp.WithString("comparison", mcp.Required(), mcp.Description("Path to the comparison profile JSON file")),
 	)
 	pos.server.AddTool(compareScalingTool, pos.handleCompareScaling)
+
+	// batch_analyze tool
+	batchTool := mcp.NewTool("batch_analyze",
+		mcp.WithDescription("Analyze multiple profiles across worker counts and return aggregated results for charting. Provide a JSON array of profile entries."),
+		mcp.WithString("profiles", mcp.Required(), mcp.Description(`JSON array of profile entries. Each entry: {"path": "file.json.gz", "workers": 4, "label": "Chrome"}`)),
+	)
+	pos.server.AddTool(batchTool, pos.handleBatchAnalyze)
+
+	// generate_chart tool
+	chartTool := mcp.NewTool("generate_chart",
+		mcp.WithDescription("Generate SVG chart from batch analysis of multiple profiles"),
+		mcp.WithString("profiles", mcp.Required(), mcp.Description(`JSON array of profile entries. Each entry: {"path": "file.json.gz", "workers": 4, "label": "Chrome"}`)),
+		mcp.WithString("chart_type", mcp.Description("Chart type: wall_clock, efficiency, speedup, crypto_time, operation_time (default: wall_clock)")),
+		mcp.WithString("output", mcp.Description("Output mode: inline (returns SVG), file (saves to path)")),
+		mcp.WithString("output_path", mcp.Description("File path for 'file' output mode (default: chart.svg)")),
+	)
+	pos.server.AddTool(chartTool, pos.handleGenerateChart)
+
+	// get_delimiter_markers tool
+	delimitersTool := mcp.NewTool("get_delimiter_markers",
+		mcp.WithDescription("List markers that can be used as operation start/end delimiters (click events, DOM updates, paint events, etc.). Use this to identify events for measuring actual operation time."),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
+		mcp.WithString("categories", mcp.Description("Filter by categories (comma-separated, e.g., 'DOM,Layout,Graphics')")),
+		mcp.WithNumber("limit", mcp.Description("Maximum number of markers to return (default: all)")),
+	)
+	pos.server.AddTool(delimitersTool, pos.handleGetDelimiterMarkers)
+
+	// measure_operation tool
+	measureTool := mcp.NewTool("measure_operation",
+		mcp.WithDescription("Measure time between two marker patterns to get actual operation duration (e.g., click to paint). Pattern format: 'type' or 'type:subtype' (e.g., 'DOMEvent:click', 'Styles', 'Paint')."),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
+		mcp.WithString("start_pattern", mcp.Description("Pattern to match start marker (e.g., 'DOMEvent:click')")),
+		mcp.WithString("end_pattern", mcp.Description("Pattern to match end marker (e.g., 'Styles' or 'Paint')")),
+		mcp.WithNumber("start_after_ms", mcp.Description("Only consider markers after this time (optional)")),
+		mcp.WithNumber("end_before_ms", mcp.Description("Only consider markers before this time (optional)")),
+		mcp.WithNumber("start_index", mcp.Description("Alternative: use marker index instead of pattern for start")),
+		mcp.WithNumber("end_index", mcp.Description("Alternative: use marker index instead of pattern for end")),
+		mcp.WithBoolean("find_last", mcp.Description("If true, find the LAST matching end marker instead of the first (for full operation time)")),
+	)
+	pos.server.AddTool(measureTool, pos.handleMeasureOperation)
 }
 
 // Serve starts the MCP server on stdio
@@ -632,4 +676,191 @@ func (pos *PerfOwlServer) handleCompareScaling(ctx context.Context, req mcp.Call
 	}
 
 	return mcp.NewToolResultText(output), nil
+}
+
+func (pos *PerfOwlServer) handleBatchAnalyze(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	profilesJSON, err := req.RequireString("profiles")
+	if err != nil {
+		return nil, fmt.Errorf("profiles is required: %w", err)
+	}
+
+	var profiles []analyzer.ProfileEntry
+	if err := json.Unmarshal([]byte(profilesJSON), &profiles); err != nil {
+		return nil, fmt.Errorf("failed to parse profiles JSON: %w", err)
+	}
+
+	if len(profiles) == 0 {
+		return nil, fmt.Errorf("no profiles provided")
+	}
+
+	result, err := analyzer.AnalyzeBatch(profiles)
+	if err != nil {
+		return nil, fmt.Errorf("batch analysis failed: %w", err)
+	}
+
+	output, err := toon.Encode(result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode batch result: %w", err)
+	}
+
+	return mcp.NewToolResultText(output), nil
+}
+
+func (pos *PerfOwlServer) handleGenerateChart(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	profilesJSON, err := req.RequireString("profiles")
+	if err != nil {
+		return nil, fmt.Errorf("profiles is required: %w", err)
+	}
+
+	var profiles []analyzer.ProfileEntry
+	if err := json.Unmarshal([]byte(profilesJSON), &profiles); err != nil {
+		return nil, fmt.Errorf("failed to parse profiles JSON: %w", err)
+	}
+
+	if len(profiles) == 0 {
+		return nil, fmt.Errorf("no profiles provided")
+	}
+
+	chartType := chart.ChartWallClock
+	if ct, err := req.RequireString("chart_type"); err == nil && ct != "" {
+		chartType = chart.ChartType(ct)
+	}
+
+	outputMode := "inline"
+	if om, err := req.RequireString("output"); err == nil && om != "" {
+		outputMode = om
+	}
+
+	result, err := analyzer.AnalyzeBatch(profiles)
+	if err != nil {
+		return nil, fmt.Errorf("batch analysis failed: %w", err)
+	}
+
+	svg := chart.GenerateScalingChart(result, chartType)
+
+	if outputMode == "file" {
+		outputPath := "chart.svg"
+		if op, err := req.RequireString("output_path"); err == nil && op != "" {
+			outputPath = op
+		}
+		if err := os.WriteFile(outputPath, []byte(svg), 0644); err != nil {
+			return nil, fmt.Errorf("failed to write SVG file: %w", err)
+		}
+		return mcp.NewToolResultText(fmt.Sprintf("Chart saved to: %s", outputPath)), nil
+	}
+
+	return mcp.NewToolResultText(svg), nil
+}
+
+func (pos *PerfOwlServer) handleGetDelimiterMarkers(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	path, err := req.RequireString("path")
+	if err != nil {
+		return nil, fmt.Errorf("path is required: %w", err)
+	}
+
+	profile, _, err := parser.LoadProfileAuto(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load profile: %w", err)
+	}
+
+	var categories []string
+	if cats, err := req.RequireString("categories"); err == nil && cats != "" {
+		for _, c := range splitAndTrim(cats) {
+			categories = append(categories, c)
+		}
+	}
+
+	limit := 0
+	if l, err := req.RequireFloat("limit"); err == nil && l > 0 {
+		limit = int(l)
+	}
+
+	report := analyzer.GetDelimiterMarkersReport(profile, categories, limit)
+
+	output, err := toon.Encode(report)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode delimiter markers: %w", err)
+	}
+
+	return mcp.NewToolResultText(output), nil
+}
+
+func (pos *PerfOwlServer) handleMeasureOperation(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	path, err := req.RequireString("path")
+	if err != nil {
+		return nil, fmt.Errorf("path is required: %w", err)
+	}
+
+	profile, _, err := parser.LoadProfileAuto(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load profile: %w", err)
+	}
+
+	// Check if using index-based measurement
+	startIdx, startIdxErr := req.RequireFloat("start_index")
+	endIdx, endIdxErr := req.RequireFloat("end_index")
+
+	if startIdxErr == nil && endIdxErr == nil {
+		// Index-based measurement
+		measurement, err := analyzer.MeasureOperationByIndex(profile, int(startIdx), int(endIdx))
+		if err != nil {
+			return nil, fmt.Errorf("measurement failed: %w", err)
+		}
+
+		output, err := toon.Encode(measurement)
+		if err != nil {
+			return nil, fmt.Errorf("failed to encode measurement: %w", err)
+		}
+		return mcp.NewToolResultText(output), nil
+	}
+
+	// Pattern-based measurement
+	startPattern, err := req.RequireString("start_pattern")
+	if err != nil {
+		return nil, fmt.Errorf("start_pattern is required: %w", err)
+	}
+
+	endPattern, err := req.RequireString("end_pattern")
+	if err != nil {
+		return nil, fmt.Errorf("end_pattern is required: %w", err)
+	}
+
+	startAfterMs := 0.0
+	if s, err := req.RequireFloat("start_after_ms"); err == nil {
+		startAfterMs = s
+	}
+
+	endBeforeMs := 0.0
+	if e, err := req.RequireFloat("end_before_ms"); err == nil {
+		endBeforeMs = e
+	}
+
+	findLast := false
+	if fl, err := req.RequireBool("find_last"); err == nil {
+		findLast = fl
+	}
+
+	measurement, err := analyzer.MeasureOperationWithOptions(profile, startPattern, endPattern, startAfterMs, endBeforeMs, findLast)
+	if err != nil {
+		return nil, fmt.Errorf("measurement failed: %w", err)
+	}
+
+	output, err := toon.Encode(measurement)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode measurement: %w", err)
+	}
+
+	return mcp.NewToolResultText(output), nil
+}
+
+// splitAndTrim splits a string by comma and trims whitespace
+func splitAndTrim(s string) []string {
+	var result []string
+	for _, part := range strings.Split(s, ",") {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }

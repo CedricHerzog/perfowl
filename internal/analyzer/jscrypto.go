@@ -52,6 +52,17 @@ var cryptoResourcePatterns = []string{
 	"webcrypto",
 }
 
+// openpgpFunctionPatterns identifies OpenPGP-related function names in bundled code
+var openpgpFunctionPatterns = []string{
+	"openpgp",
+	"decryptwithsessionkey",
+	"decryptmetadatawithsessionkey",
+	"initializesessionkeys",
+	"parsesessionkey",
+	"seipdpacket",
+	"symencryptedintegrityprotecteddata",
+}
+
 // isCryptoJSResource checks if a resource name indicates JS crypto work
 func isCryptoJSResource(name string) bool {
 	lower := strings.ToLower(name)
@@ -65,6 +76,25 @@ func isCryptoJSResource(name string) bool {
 		}
 	}
 	return false
+}
+
+// isOpenPGPFunction checks if a function name indicates OpenPGP crypto work
+// This is used for detecting crypto in bundled files (like vendors.js) where
+// the file name doesn't contain crypto patterns
+func isOpenPGPFunction(name string) bool {
+	lower := strings.ToLower(name)
+	for _, pattern := range openpgpFunctionPatterns {
+		if strings.Contains(lower, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
+// isServiceWorkerThread checks if a thread is a ServiceWorker
+func isServiceWorkerThread(threadName string) bool {
+	lower := strings.ToLower(threadName)
+	return strings.Contains(lower, "serviceworker")
 }
 
 // extractResourceName extracts a clean resource name from a URL or path
@@ -251,6 +281,7 @@ func AnalyzeJSCrypto(profile *parser.Profile) JSCryptoAnalysis {
 		// IMPORTANT: Only consider JS functions (isJS=true) to avoid counting native code
 		cryptoResourceIdx := make(map[int]string) // resourceIdx -> extracted file name
 		cryptoResourceFile := ""                   // Track the crypto file for this thread
+		hasOpenPGPFunctions := false               // Track if OpenPGP functions found (for bundled code)
 
 		for funcIdx, funcName := range funcIdxToName {
 			// Skip non-JS functions - they might reference crypto files but aren't running crypto code
@@ -281,10 +312,23 @@ func AnalyzeJSCrypto(profile *parser.Profile) JSCryptoAnalysis {
 					cryptoResourceFile = extractedFile
 				}
 			}
+
+			// Also check for OpenPGP function patterns in bundled code (like vendors.js)
+			// This catches Chrome profiles where crypto runs in ServiceWorker with bundled files
+			if isOpenPGPFunction(funcName) {
+				hasOpenPGPFunctions = true
+				// Use the file name if available, otherwise mark as bundled
+				if fileName != "" && fileName != "(unknown)" {
+					if cryptoResourceFile == "" {
+						cryptoResourceFile = extractResourceName(fileName) + " (bundled)"
+					}
+				}
+			}
 		}
 
 		// If no crypto resources found in this thread, skip it
-		if len(cryptoResourceIdx) == 0 && cryptoResourceFile == "" {
+		// Exception: ServiceWorker threads with crypto/OpenPGP functions should be analyzed
+		if len(cryptoResourceIdx) == 0 && cryptoResourceFile == "" && !hasOpenPGPFunctions {
 			continue
 		}
 
@@ -332,6 +376,18 @@ func AnalyzeJSCrypto(profile *parser.Profile) JSCryptoAnalysis {
 				if isCryptoFunction(funcName) || cryptoResourceFile != "" {
 					cryptoFuncIdx[funcIdx] = extractResourceName(fileName)
 				}
+			}
+
+			// Check for OpenPGP functions in bundled code (ServiceWorker with vendors.js, etc.)
+			if hasOpenPGPFunctions && (isOpenPGPFunction(funcName) || isCryptoFunction(funcName)) {
+				resourceName := "bundled"
+				if fileName != "" && fileName != "(unknown)" {
+					resourceName = extractResourceName(fileName)
+				}
+				if cryptoResourceFile != "" {
+					resourceName = cryptoResourceFile
+				}
+				cryptoFuncIdx[funcIdx] = resourceName
 			}
 		}
 
