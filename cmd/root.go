@@ -10,6 +10,7 @@ import (
 var (
 	profilePath  string
 	outputFormat string
+	browserType  string
 )
 
 var rootCmd = &cobra.Command{
@@ -25,7 +26,9 @@ Features:
 - MCP server integration for Claude and other AI assistants
 - Multiple output formats (text, JSON, markdown)
 
-Currently supports Firefox Profiler exports, with more browsers coming soon.`,
+Supported browsers:
+- Firefox Profiler exports
+- Chrome DevTools Performance traces`,
 }
 
 func Execute() {
@@ -36,6 +39,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&profilePath, "profile", "p", "", "Path to Firefox profile JSON (gzip supported)")
+	rootCmd.PersistentFlags().StringVarP(&profilePath, "profile", "p", "", "Path to browser profile JSON (gzip supported)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "text", "Output format: text, json, markdown")
+	rootCmd.PersistentFlags().StringVarP(&browserType, "browser", "b", "auto", "Browser type: auto, firefox, chrome")
 }

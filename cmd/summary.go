@@ -12,7 +12,7 @@ import (
 
 var summaryCmd = &cobra.Command{
 	Use:   "summary",
-	Short: "Display a summary of the Firefox profile",
+	Short: "Display a summary of the browser profile",
 	Long:  `Shows key information about the profile including duration, threads, extensions, and captured features.`,
 	RunE:  runSummary,
 }
@@ -22,6 +22,7 @@ func init() {
 }
 
 type ProfileSummary struct {
+	BrowserType     string             `json:"browser_type"`
 	Duration        float64            `json:"duration_seconds"`
 	Platform        string             `json:"platform"`
 	OSCPU           string             `json:"os_cpu"`
@@ -45,12 +46,13 @@ func runSummary(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("profile path is required (use --profile or -p)")
 	}
 
-	profile, err := parser.LoadProfile(profilePath)
+	bt := parser.ParseBrowserType(browserType)
+	profile, detectedType, err := parser.LoadProfileWithType(profilePath, bt)
 	if err != nil {
 		return fmt.Errorf("failed to load profile: %w", err)
 	}
 
-	summary := buildSummary(profile)
+	summary := buildSummary(profile, detectedType)
 
 	switch outputFormat {
 	case "json":
@@ -62,8 +64,9 @@ func runSummary(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func buildSummary(profile *parser.Profile) ProfileSummary {
+func buildSummary(profile *parser.Profile, bt parser.BrowserType) ProfileSummary {
 	summary := ProfileSummary{
+		BrowserType:    string(bt),
 		Duration:       profile.DurationSeconds(),
 		Platform:       profile.Meta.Platform,
 		OSCPU:          profile.Meta.OSCPU,
@@ -104,9 +107,14 @@ func outputJSON(summary ProfileSummary) error {
 func outputMarkdown(summary ProfileSummary) error {
 	md := strings.Builder{}
 
-	md.WriteString("# Firefox Profile Summary\n\n")
+	browserName := strings.Title(summary.BrowserType)
+	if browserName == "" {
+		browserName = "Browser"
+	}
+	md.WriteString(fmt.Sprintf("# %s Profile Summary\n\n", browserName))
 
 	md.WriteString("## Overview\n\n")
+	md.WriteString(fmt.Sprintf("- **Browser**: %s\n", browserName))
 	md.WriteString(fmt.Sprintf("- **Duration**: %.2f seconds\n", summary.Duration))
 	md.WriteString(fmt.Sprintf("- **Platform**: %s (%s)\n", summary.Platform, summary.OSCPU))
 	md.WriteString(fmt.Sprintf("- **Product**: %s (Build: %s)\n", summary.Product, summary.BuildID))
@@ -135,11 +143,16 @@ func outputMarkdown(summary ProfileSummary) error {
 }
 
 func outputText(summary ProfileSummary) error {
-	fmt.Println("Firefox Profile Summary")
+	browserName := strings.Title(summary.BrowserType)
+	if browserName == "" {
+		browserName = "Browser"
+	}
+	fmt.Printf("%s Profile Summary\n", browserName)
 	fmt.Println(strings.Repeat("=", 50))
 	fmt.Println()
 
 	fmt.Println("Overview:")
+	fmt.Printf("  Browser:      %s\n", browserName)
 	fmt.Printf("  Duration:     %.2f seconds\n", summary.Duration)
 	fmt.Printf("  Platform:     %s (%s)\n", summary.Platform, summary.OSCPU)
 	fmt.Printf("  Product:      %s\n", summary.Product)

@@ -19,7 +19,7 @@ var (
 var bottlenecksCmd = &cobra.Command{
 	Use:   "bottlenecks",
 	Short: "Detect performance bottlenecks in the profile",
-	Long: `Analyzes the Firefox profile to identify performance bottlenecks.
+	Long: `Analyzes the browser profile to identify performance bottlenecks.
 
 Detects:
 - Long tasks (main thread blocking > 50ms)
@@ -42,7 +42,8 @@ func runBottlenecks(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("profile path is required (use --profile or -p)")
 	}
 
-	profile, err := parser.LoadProfile(profilePath)
+	bt := parser.ParseBrowserType(browserType)
+	profile, _, err := parser.LoadProfileWithType(profilePath, bt)
 	if err != nil {
 		return fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -95,7 +96,7 @@ func outputBottlenecksJSON(output analyzer.BottleneckReport) error {
 func outputBottlenecksMarkdown(output analyzer.BottleneckReport, profile *parser.Profile) error {
 	md := strings.Builder{}
 
-	md.WriteString("# Firefox Profile Bottleneck Analysis\n\n")
+	md.WriteString("# Profile Bottleneck Analysis\n\n")
 
 	md.WriteString("## Overview\n\n")
 	md.WriteString(fmt.Sprintf("- **Duration**: %.2f seconds\n", profile.DurationSeconds()))
@@ -161,7 +162,7 @@ func outputBottlenecksMarkdown(output analyzer.BottleneckReport, profile *parser
 }
 
 func outputBottlenecksText(output analyzer.BottleneckReport, profile *parser.Profile) error {
-	fmt.Println("Firefox Profile Bottleneck Analysis")
+	fmt.Println("Profile Bottleneck Analysis")
 	fmt.Println(strings.Repeat("=", 50))
 	fmt.Println()
 

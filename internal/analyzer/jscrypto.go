@@ -76,11 +76,22 @@ func extractResourceName(url string) string {
 			return parts[len(parts)-1]
 		}
 	}
-	// Handle regular URLs
-	if idx := strings.LastIndex(url, "/"); idx >= 0 {
-		return url[idx+1:]
+	// Handle chrome-extension URLs
+	if strings.Contains(url, "chrome-extension://") {
+		parts := strings.Split(url, "/")
+		if len(parts) > 0 {
+			return parts[len(parts)-1]
+		}
 	}
-	return url
+	// Handle regular URLs (remove query string first)
+	cleanURL := url
+	if queryIdx := strings.Index(url, "?"); queryIdx >= 0 {
+		cleanURL = url[:queryIdx]
+	}
+	if idx := strings.LastIndex(cleanURL, "/"); idx >= 0 {
+		return cleanURL[idx+1:]
+	}
+	return cleanURL
 }
 
 // extractResourceFromFuncName extracts a JS file path from a Firefox function name
@@ -88,6 +99,7 @@ func extractResourceName(url string) string {
 // "(root scope) moz-extension://abc/workers/seipdDecryptionWorker.min.js"
 // "WorkerThreadPrimaryRunnable::Run moz-extension://abc/workers/file.js"
 // "../node_modules/.pnpm/openpgp@6.1.1/node_modules/openpgp/dist/openpgp.min.mjs/func"
+// Chrome uses chrome-extension:// URLs in FuncTable.FileName
 func extractResourceFromFuncName(funcName string) string {
 	// Look for moz-extension:// URL pattern
 	if idx := strings.Index(funcName, "moz-extension://"); idx >= 0 {
@@ -98,6 +110,22 @@ func extractResourceFromFuncName(funcName string) string {
 			beforeColon := url[:colonIdx]
 			if secondColonIdx := strings.LastIndex(beforeColon, ":"); secondColonIdx > 0 {
 				// Verify both parts after colons are numeric
+				part1 := beforeColon[secondColonIdx+1:]
+				part2 := url[colonIdx+1:]
+				if isNumeric(part1) && isNumeric(part2) {
+					url = beforeColon[:secondColonIdx]
+				}
+			}
+		}
+		return url
+	}
+	// Look for chrome-extension:// URL pattern
+	if idx := strings.Index(funcName, "chrome-extension://"); idx >= 0 {
+		url := funcName[idx:]
+		// Remove trailing line:col info
+		if colonIdx := strings.LastIndex(url, ":"); colonIdx > 0 {
+			beforeColon := url[:colonIdx]
+			if secondColonIdx := strings.LastIndex(beforeColon, ":"); secondColonIdx > 0 {
 				part1 := beforeColon[secondColonIdx+1:]
 				part2 := url[colonIdx+1:]
 				if isNumeric(part1) && isNumeric(part2) {
@@ -193,10 +221,14 @@ func AnalyzeJSCrypto(profile *parser.Profile) JSCryptoAnalysis {
 			}
 		}
 
-		// Note: Firefox profiles don't have FuncTable.FileName
-		// Instead, file paths are embedded in function names like:
-		// "(root scope) moz-extension://...seipdDecryptionWorker.min.js"
-		// We'll extract file info from function names directly
+		// funcIdx -> file name (Chrome profiles store file URLs separately in FuncTable.FileName)
+		// Firefox profiles don't use this; they embed paths in function names instead
+		funcIdxToFileName := make(map[int]string)
+		for funcIdx, fileNameIdx := range thread.FuncTable.FileName {
+			if fileNameIdx >= 0 && fileNameIdx < len(stringArray) {
+				funcIdxToFileName[funcIdx] = stringArray[fileNameIdx]
+			}
+		}
 
 		// resourceIdx -> resource name
 		resourceIdxToName := make(map[int]string)
@@ -215,7 +247,7 @@ func AnalyzeJSCrypto(profile *parser.Profile) JSCryptoAnalysis {
 		// First pass: find which resources are crypto JS resources
 		// Firefox profiles have functions with embedded paths like:
 		// "(root scope) moz-extension://...seipdDecryptionWorker.min.js"
-		// We use these to identify which resource indices are crypto resources
+		// Chrome profiles have the file URL in FuncTable.FileName
 		// IMPORTANT: Only consider JS functions (isJS=true) to avoid counting native code
 		cryptoResourceIdx := make(map[int]string) // resourceIdx -> extracted file name
 		cryptoResourceFile := ""                   // Track the crypto file for this thread
@@ -225,25 +257,40 @@ func AnalyzeJSCrypto(profile *parser.Profile) JSCryptoAnalysis {
 			if funcIdx >= len(thread.FuncTable.IsJS) || !thread.FuncTable.IsJS[funcIdx] {
 				continue
 			}
-			// Check if function name contains a crypto JS file path
-			if isCryptoJSResource(funcName) {
-				extractedFile := extractResourceFromFuncName(funcName)
+
+			// Check both function name (Firefox) and file name (Chrome) for crypto patterns
+			fileName := funcIdxToFileName[funcIdx]
+			checkName := funcName
+			if fileName != "" && fileName != "(unknown)" {
+				// Chrome profile: prefer checking the file name
+				checkName = fileName
+			}
+
+			if isCryptoJSResource(checkName) {
+				extractedFile := extractResourceFromFuncName(checkName)
+				if fileName != "" && fileName != "(unknown)" {
+					// Chrome: use the file name directly
+					extractedFile = extractResourceName(fileName)
+				}
 				// Also mark the resource this function belongs to as crypto
 				if resIdx, ok := funcIdxToResource[funcIdx]; ok && resIdx >= 0 {
 					cryptoResourceIdx[resIdx] = extractedFile
+					cryptoResourceFile = extractedFile
+				} else {
+					// No resource index, use function name for tracking
 					cryptoResourceFile = extractedFile
 				}
 			}
 		}
 
 		// If no crypto resources found in this thread, skip it
-		if len(cryptoResourceIdx) == 0 {
+		if len(cryptoResourceIdx) == 0 && cryptoResourceFile == "" {
 			continue
 		}
 
 		// Second pass: identify JS functions that are actually doing crypto work
 		// Only count functions that:
-		// 1. Have a crypto file path in their function name (like functions from seipdDecryptionWorker.min.js)
+		// 1. Have a crypto file path in their function name or file name
 		// 2. OR have a crypto-related function name (decrypt, encrypt, etc.)
 		cryptoFuncIdx := make(map[int]string) // funcIdx -> resource file name
 		for funcIdx, funcName := range funcIdxToName {
@@ -252,20 +299,38 @@ func AnalyzeJSCrypto(profile *parser.Profile) JSCryptoAnalysis {
 				continue
 			}
 
-			// Check if function name contains a crypto JS file path
-			if isCryptoJSResource(funcName) {
-				cryptoFuncIdx[funcIdx] = extractResourceFromFuncName(funcName)
+			// Get file name for Chrome profiles
+			fileName := funcIdxToFileName[funcIdx]
+			checkName := funcName
+			if fileName != "" && fileName != "(unknown)" {
+				checkName = fileName
+			}
+
+			// Check if function/file name indicates a crypto JS resource
+			if isCryptoJSResource(checkName) {
+				extractedFile := extractResourceFromFuncName(checkName)
+				if fileName != "" && fileName != "(unknown)" {
+					extractedFile = extractResourceName(fileName)
+				}
+				cryptoFuncIdx[funcIdx] = extractedFile
 				continue
 			}
 
 			// Check if this function has a crypto-related name AND belongs to a crypto resource
 			// This ensures we only count functions like "decrypt" when they're in a crypto context
 			if resIdx, ok := funcIdxToResource[funcIdx]; ok && resIdx >= 0 {
-				if fileName, isCrypto := cryptoResourceIdx[resIdx]; isCrypto {
+				if extractedFile, isCrypto := cryptoResourceIdx[resIdx]; isCrypto {
 					// Only include if the function name itself is crypto-related
 					if isCryptoFunction(funcName) {
-						cryptoFuncIdx[funcIdx] = fileName
+						cryptoFuncIdx[funcIdx] = extractedFile
 					}
+				}
+			}
+
+			// For Chrome profiles without resource index, check if file is in a known crypto file
+			if fileName != "" && fileName != "(unknown)" && isCryptoJSResource(fileName) {
+				if isCryptoFunction(funcName) || cryptoResourceFile != "" {
+					cryptoFuncIdx[funcIdx] = extractResourceName(fileName)
 				}
 			}
 		}

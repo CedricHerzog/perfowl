@@ -21,7 +21,7 @@ var (
 var markersCmd = &cobra.Command{
 	Use:   "markers",
 	Short: "Extract and analyze markers from the profile",
-	Long: `Extract markers from the Firefox profile, optionally filtered by type or category.
+	Long: `Extract markers from the browser profile, optionally filtered by type or category.
 
 Marker types include: GCMajor, GCMinor, DOMEvent, Styles, UserTiming,
 MainThreadLongTask, ChannelMarker, HostResolver, JSActorMessage, etc.
@@ -50,7 +50,8 @@ func runMarkers(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("profile path is required (use --profile or -p)")
 	}
 
-	profile, err := parser.LoadProfile(profilePath)
+	bt := parser.ParseBrowserType(browserType)
+	profile, _, err := parser.LoadProfileWithType(profilePath, bt)
 	if err != nil {
 		return fmt.Errorf("failed to load profile: %w", err)
 	}

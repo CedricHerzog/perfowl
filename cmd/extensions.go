@@ -40,7 +40,8 @@ func runExtensions(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("profile path is required (use --profile or -p)")
 	}
 
-	profile, err := parser.LoadProfile(profilePath)
+	bt := parser.ParseBrowserType(browserType)
+	profile, _, err := parser.LoadProfileWithType(profilePath, bt)
 	if err != nil {
 		return fmt.Errorf("failed to load profile: %w", err)
 	}

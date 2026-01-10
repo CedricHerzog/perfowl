@@ -39,14 +39,15 @@ func runScaling(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("profile path is required (use --profile or -p)")
 	}
 
-	profile, err := parser.LoadProfile(profilePath)
+	bt := parser.ParseBrowserType(browserType)
+	profile, _, err := parser.LoadProfileWithType(profilePath, bt)
 	if err != nil {
 		return fmt.Errorf("failed to load profile: %w", err)
 	}
 
 	// Check if we're doing a comparison
 	if compareProfile != "" {
-		compProfile, err := parser.LoadProfile(compareProfile)
+		compProfile, _, err := parser.LoadProfileWithType(compareProfile, bt)
 		if err != nil {
 			return fmt.Errorf("failed to load comparison profile: %w", err)
 		}

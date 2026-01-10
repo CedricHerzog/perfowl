@@ -49,3 +49,51 @@ func LoadProfileFromReader(reader io.Reader) (*Profile, error) {
 	}
 	return &profile, nil
 }
+
+// LoadProfileAuto loads a profile with automatic browser detection
+func LoadProfileAuto(path string) (*Profile, BrowserType, error) {
+	browserType, err := DetectBrowserType(path)
+	if err != nil {
+		return nil, BrowserUnknown, fmt.Errorf("failed to detect browser type: %w", err)
+	}
+
+	return LoadProfileWithType(path, browserType)
+}
+
+// LoadProfileWithType loads a profile with explicit browser type
+func LoadProfileWithType(path string, browserType BrowserType) (*Profile, BrowserType, error) {
+	switch browserType {
+	case BrowserFirefox:
+		profile, err := LoadProfile(path)
+		return profile, BrowserFirefox, err
+
+	case BrowserChrome:
+		chromeProfile, err := LoadChromeProfile(path)
+		if err != nil {
+			return nil, BrowserChrome, err
+		}
+		profile, err := ConvertChromeToProfile(chromeProfile)
+		return profile, BrowserChrome, err
+
+	default:
+		// Auto-detect: try to detect browser type first
+		detectedType, detectErr := DetectBrowserType(path)
+		if detectErr == nil && detectedType != BrowserUnknown {
+			return LoadProfileWithType(path, detectedType)
+		}
+
+		// Fallback: try Firefox first, then Chrome
+		profile, err := LoadProfile(path)
+		if err == nil {
+			return profile, BrowserFirefox, nil
+		}
+
+		chromeProfile, chromeErr := LoadChromeProfile(path)
+		if chromeErr == nil {
+			profile, err := ConvertChromeToProfile(chromeProfile)
+			return profile, BrowserChrome, err
+		}
+
+		return nil, BrowserUnknown, fmt.Errorf("failed to parse as Firefox or Chrome profile")
+	}
+}

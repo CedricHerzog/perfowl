@@ -34,15 +34,15 @@ func NewServer() *PerfOwlServer {
 func (pos *PerfOwlServer) registerTools() {
 	// get_summary tool
 	summaryTool := mcp.NewTool("get_summary",
-		mcp.WithDescription("Get a summary of the Firefox profile including duration, platform, threads, and extensions"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file (gzip supported)")),
+		mcp.WithDescription("Get a summary of the browser profile including duration, platform, threads, and extensions"),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file (gzip supported)")),
 	)
 	pos.server.AddTool(summaryTool, pos.handleGetSummary)
 
 	// get_bottlenecks tool
 	bottlenecksTool := mcp.NewTool("get_bottlenecks",
-		mcp.WithDescription("Detect performance bottlenecks in the Firefox profile including long tasks, GC pressure, sync IPC, layout thrashing, and network blocking"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithDescription("Detect performance bottlenecks in the profile including long tasks, GC pressure, sync IPC, layout thrashing, and network blocking"),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 		mcp.WithString("min_severity", mcp.Description("Minimum severity to report: low, medium, high")),
 	)
 	pos.server.AddTool(bottlenecksTool, pos.handleGetBottlenecks)
@@ -50,7 +50,7 @@ func (pos *PerfOwlServer) registerTools() {
 	// get_markers tool
 	markersTool := mcp.NewTool("get_markers",
 		mcp.WithDescription("Extract and analyze markers from the profile, optionally filtered by type or category"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 		mcp.WithString("type", mcp.Description("Filter by marker type (e.g., GCMajor, DOMEvent, JSActorMessage)")),
 		mcp.WithString("category", mcp.Description("Filter by category (e.g., JavaScript, Layout, Network)")),
 		mcp.WithNumber("min_duration", mcp.Description("Minimum duration in milliseconds")),
@@ -61,22 +61,22 @@ func (pos *PerfOwlServer) registerTools() {
 	// analyze_extension tool
 	extensionTool := mcp.NewTool("analyze_extension",
 		mcp.WithDescription("Analyze extension performance impact including duration, events, DOM interactions, and IPC messages"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 		mcp.WithString("extension_id", mcp.Description("Filter by specific extension ID (optional)")),
 	)
 	pos.server.AddTool(extensionTool, pos.handleAnalyzeExtension)
 
 	// analyze_profile tool (comprehensive analysis)
 	analyzeTool := mcp.NewTool("analyze_profile",
-		mcp.WithDescription("Perform a comprehensive analysis of the Firefox profile including summary, bottlenecks, and extension impact"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithDescription("Perform a comprehensive analysis of the profile including summary, bottlenecks, and extension impact"),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 	)
 	pos.server.AddTool(analyzeTool, pos.handleAnalyzeProfile)
 
 	// get_call_tree tool
 	callTreeTool := mcp.NewTool("get_call_tree",
 		mcp.WithDescription("Analyze call tree to find hot functions by self time and running time, with hot path detection"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 		mcp.WithString("thread", mcp.Description("Filter by thread name (optional)")),
 		mcp.WithNumber("limit", mcp.Description("Maximum number of functions/paths to return (default 20)")),
 	)
@@ -85,7 +85,7 @@ func (pos *PerfOwlServer) registerTools() {
 	// get_category_breakdown tool
 	categoryTool := mcp.NewTool("get_category_breakdown",
 		mcp.WithDescription("Get time spent per profiler category (JavaScript, Layout, GC/CC, Network, Graphics, DOM, etc.)"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 		mcp.WithString("thread", mcp.Description("Filter by thread name (optional)")),
 	)
 	pos.server.AddTool(categoryTool, pos.handleGetCategoryBreakdown)
@@ -93,7 +93,7 @@ func (pos *PerfOwlServer) registerTools() {
 	// get_thread_analysis tool
 	threadTool := mcp.NewTool("get_thread_analysis",
 		mcp.WithDescription("Analyze all threads including CPU time, sample counts, wake patterns, and category distribution"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 	)
 	pos.server.AddTool(threadTool, pos.handleGetThreadAnalysis)
 
@@ -108,35 +108,35 @@ func (pos *PerfOwlServer) registerTools() {
 	// analyze_workers tool
 	workersTool := mcp.NewTool("analyze_workers",
 		mcp.WithDescription("Analyze worker thread performance including CPU time, idle time, messaging, and synchronization points"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 	)
 	pos.server.AddTool(workersTool, pos.handleAnalyzeWorkers)
 
 	// analyze_crypto tool
 	cryptoTool := mcp.NewTool("analyze_crypto",
 		mcp.WithDescription("Analyze cryptographic operations including SubtleCrypto API usage, algorithm detection, and serialization issues"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 	)
 	pos.server.AddTool(cryptoTool, pos.handleAnalyzeCrypto)
 
 	// analyze_jscrypto tool
 	jsCryptoTool := mcp.NewTool("analyze_jscrypto",
 		mcp.WithDescription("Analyze JavaScript-level crypto operations including crypto worker files (seipdDecryptionWorker, openpgp.js), per-worker time distribution, and top functions"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 	)
 	pos.server.AddTool(jsCryptoTool, pos.handleAnalyzeJSCrypto)
 
 	// analyze_contention tool
 	contentionTool := mcp.NewTool("analyze_contention",
 		mcp.WithDescription("Detect thread contention issues including GC pauses affecting workers, sync IPC blocking, and lock contention"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 	)
 	pos.server.AddTool(contentionTool, pos.handleAnalyzeContention)
 
 	// analyze_scaling tool
 	scalingTool := mcp.NewTool("analyze_scaling",
 		mcp.WithDescription("Analyze parallel scaling efficiency including worker utilization, speedup, and bottleneck identification"),
-		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the Firefox profile JSON file")),
+		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 	)
 	pos.server.AddTool(scalingTool, pos.handleAnalyzeScaling)
 
@@ -162,7 +162,7 @@ func (pos *PerfOwlServer) handleGetSummary(ctx context.Context, req mcp.CallTool
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -182,7 +182,7 @@ func (pos *PerfOwlServer) handleGetBottlenecks(ctx context.Context, req mcp.Call
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -221,7 +221,7 @@ func (pos *PerfOwlServer) handleGetMarkers(ctx context.Context, req mcp.CallTool
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -279,7 +279,7 @@ func (pos *PerfOwlServer) handleAnalyzeExtension(ctx context.Context, req mcp.Ca
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -311,7 +311,7 @@ func (pos *PerfOwlServer) handleAnalyzeProfile(ctx context.Context, req mcp.Call
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -366,7 +366,7 @@ func (pos *PerfOwlServer) handleGetCallTree(ctx context.Context, req mcp.CallToo
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -397,7 +397,7 @@ func (pos *PerfOwlServer) handleGetCategoryBreakdown(ctx context.Context, req mc
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -423,7 +423,7 @@ func (pos *PerfOwlServer) handleGetThreadAnalysis(ctx context.Context, req mcp.C
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -449,12 +449,12 @@ func (pos *PerfOwlServer) handleCompareProfiles(ctx context.Context, req mcp.Cal
 		return nil, fmt.Errorf("comparison path is required: %w", err)
 	}
 
-	baseline, err := parser.LoadProfile(baselinePath)
+	baseline, _, err := parser.LoadProfileAuto(baselinePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load baseline profile: %w", err)
 	}
 
-	comparison, err := parser.LoadProfile(comparisonPath)
+	comparison, _, err := parser.LoadProfileAuto(comparisonPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load comparison profile: %w", err)
 	}
@@ -504,7 +504,7 @@ func (pos *PerfOwlServer) handleAnalyzeWorkers(ctx context.Context, req mcp.Call
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -525,7 +525,7 @@ func (pos *PerfOwlServer) handleAnalyzeCrypto(ctx context.Context, req mcp.CallT
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -546,7 +546,7 @@ func (pos *PerfOwlServer) handleAnalyzeJSCrypto(ctx context.Context, req mcp.Cal
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -567,7 +567,7 @@ func (pos *PerfOwlServer) handleAnalyzeContention(ctx context.Context, req mcp.C
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -588,7 +588,7 @@ func (pos *PerfOwlServer) handleAnalyzeScaling(ctx context.Context, req mcp.Call
 		return nil, fmt.Errorf("path is required: %w", err)
 	}
 
-	profile, err := parser.LoadProfile(path)
+	profile, _, err := parser.LoadProfileAuto(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profile: %w", err)
 	}
@@ -614,12 +614,12 @@ func (pos *PerfOwlServer) handleCompareScaling(ctx context.Context, req mcp.Call
 		return nil, fmt.Errorf("comparison path is required: %w", err)
 	}
 
-	baseline, err := parser.LoadProfile(baselinePath)
+	baseline, _, err := parser.LoadProfileAuto(baselinePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load baseline profile: %w", err)
 	}
 
-	comparison, err := parser.LoadProfile(comparisonPath)
+	comparison, _, err := parser.LoadProfileAuto(comparisonPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load comparison profile: %w", err)
 	}

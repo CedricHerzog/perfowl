@@ -175,7 +175,11 @@ func detectGCPressure(markers []parser.ParsedMarker, durationSec float64) *Bottl
 	const maxReasonableGCDuration = 5000.0
 
 	for _, m := range markers {
-		if strings.HasPrefix(m.Name, "GC") || m.Category == "GC / CC" {
+		// Match Firefox GC markers (GCMajor, GCMinor, etc.) and Chrome GC events (V8.GC_*)
+		isGC := strings.HasPrefix(m.Name, "GC") ||
+			strings.HasPrefix(m.Name, "V8.GC") ||
+			m.Category == "GC / CC"
+		if isGC {
 			// Only count markers with reasonable positive durations
 			if m.Duration > 0 && m.Duration < maxReasonableGCDuration {
 				gcMarkers = append(gcMarkers, m)

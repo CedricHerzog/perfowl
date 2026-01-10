@@ -44,17 +44,38 @@ type WorkerAnalysis struct {
 	Warnings          []string      `json:"warnings,omitempty"`
 }
 
-// isWorkerThread checks if a thread is a worker thread
+// isWorkerThread checks if a thread is a web worker thread (not browser-internal threads)
 func isWorkerThread(thread *parser.Thread) bool {
 	name := strings.ToLower(thread.Name)
-	// Check for various worker thread patterns
-	if strings.Contains(name, "dom worker") ||
-		strings.Contains(name, "web worker") ||
-		strings.Contains(name, "sharedworker") ||
-		strings.Contains(name, "serviceworker") ||
-		strings.Contains(name, "worker") && !thread.IsMainThread {
+
+	// Exclude browser-internal worker threads that aren't web workers
+	excludePatterns := []string{
+		"threadpoolforegroundworker", // Chrome's internal thread pool
+		"threadpoolbackgroundworker", // Chrome's internal thread pool
+		"compositortileworker",       // Chrome's compositor tile worker
+		"audioworklet",               // Audio worklet (different from web workers)
+		"paintworklet",               // Paint worklet
+		"v8:profevntproc",            // V8 profiler event processor
+	}
+	for _, pattern := range excludePatterns {
+		if strings.Contains(name, pattern) {
+			return false
+		}
+	}
+
+	// Check for web worker patterns
+	if strings.Contains(name, "dom worker") || // Firefox web workers
+		strings.Contains(name, "dedicatedworker") || // Chrome dedicated workers
+		strings.Contains(name, "sharedworker") || // Shared workers
+		strings.Contains(name, "serviceworker") { // Service workers
 		return true
 	}
+
+	// Generic "worker" in name, but not main thread and not excluded
+	if strings.Contains(name, "worker") && !thread.IsMainThread {
+		return true
+	}
+
 	return false
 }
 

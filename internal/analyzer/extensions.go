@@ -136,7 +136,13 @@ func matchExtension(m parser.ParsedMarker, extensionURLs map[string]string) stri
 	// Check URL in marker data
 	if url, ok := m.Data["url"].(string); ok {
 		for extID, baseURL := range extensionURLs {
-			if strings.HasPrefix(url, baseURL) || strings.Contains(url, "moz-extension://") {
+			if strings.HasPrefix(url, baseURL) {
+				return extID
+			}
+		}
+		// Check for browser-specific extension URL patterns
+		if strings.Contains(url, "moz-extension://") || strings.Contains(url, "chrome-extension://") {
+			for extID := range extensionURLs {
 				return extID
 			}
 		}
@@ -190,7 +196,8 @@ func matchExtension(m parser.ParsedMarker, extensionURLs map[string]string) stri
 	// Check for extension-specific text markers
 	if m.Name == "Text" || m.Type == "Text" {
 		if name, ok := m.Data["name"].(string); ok {
-			if strings.Contains(name, "moz-extension://") {
+			// Check for browser-specific extension URL patterns
+			if strings.Contains(name, "moz-extension://") || strings.Contains(name, "chrome-extension://") {
 				for extID, baseURL := range extensionURLs {
 					if strings.Contains(name, baseURL) {
 						return extID
