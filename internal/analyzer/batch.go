@@ -2,10 +2,19 @@ package analyzer
 
 import (
 	"fmt"
+	"runtime"
 	"sort"
+	"sync"
 
 	"github.com/CedricHerzog/perfowl/internal/parser"
 )
+
+// profileResult holds the result of processing a single profile
+type profileResult struct {
+	point ProfileDataPoint
+	label string
+	err   error
+}
 
 // ProfileEntry defines a single profile to analyze with its metadata
 type ProfileEntry struct {
@@ -67,55 +76,83 @@ func AnalyzeBatch(profiles []ProfileEntry) (*BatchAnalysisResult, error) {
 		return result, nil
 	}
 
-	// Track unique labels
-	labelSet := make(map[string]bool)
+	// Process profiles in parallel
+	results := make(chan profileResult, len(profiles))
+	var wg sync.WaitGroup
 
-	// Process each profile
+	// Limit concurrent I/O to avoid overwhelming disk/memory
+	maxConcurrency := runtime.NumCPU()
+	if maxConcurrency > len(profiles) {
+		maxConcurrency = len(profiles)
+	}
+	sem := make(chan struct{}, maxConcurrency)
+
 	for _, entry := range profiles {
-		profile, _, err := parser.LoadProfileAuto(entry.Path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load profile %s: %w", entry.Path, err)
-		}
+		wg.Add(1)
+		go func(e ProfileEntry) {
+			defer wg.Done()
+			sem <- struct{}{}        // Acquire semaphore
+			defer func() { <-sem }() // Release semaphore
 
-		// Run scaling analysis
-		scaling := AnalyzeScaling(profile)
-
-		// Run JS crypto analysis
-		crypto := AnalyzeJSCrypto(profile)
-
-		// Create data point
-		point := ProfileDataPoint{
-			WorkerCount:  entry.WorkerCount,
-			Label:        entry.Label,
-			FilePath:     entry.Path,
-			WallClockMs:  scaling.WallClockMs,
-			TotalWorkMs:  scaling.TotalWorkMs,
-			Efficiency:   scaling.Efficiency,
-			Speedup:      scaling.ActualSpeedup,
-			CryptoTimeMs: crypto.TotalTimeMs,
-		}
-
-		// Measure operation time if patterns are provided (uses find_last for full operation duration)
-		if entry.StartPattern != "" && entry.EndPattern != "" {
-			measurement, err := MeasureOperationAdvanced(profile, MeasureOptions{
-				StartPattern:       entry.StartPattern,
-				EndPattern:         entry.EndPattern,
-				FindLast:           true,
-				StartMinDurationMs: entry.StartMinDuration,
-				EndMinDurationMs:   entry.EndMinDuration,
-			})
-			if err == nil {
-				point.OperationTimeMs = measurement.OperationTimeMs
+			profile, _, err := parser.LoadProfileAuto(e.Path)
+			if err != nil {
+				results <- profileResult{err: fmt.Errorf("failed to load profile %s: %w", e.Path, err)}
+				return
 			}
-			// Silently ignore errors - operation time will be 0 if measurement fails
-		}
 
-		// Add to series
-		if result.Series[entry.Label] == nil {
-			result.Series[entry.Label] = make([]ProfileDataPoint, 0)
+			// Run scaling analysis
+			scaling := AnalyzeScaling(profile)
+
+			// Run JS crypto analysis
+			crypto := AnalyzeJSCrypto(profile)
+
+			// Create data point
+			point := ProfileDataPoint{
+				WorkerCount:  e.WorkerCount,
+				Label:        e.Label,
+				FilePath:     e.Path,
+				WallClockMs:  scaling.WallClockMs,
+				TotalWorkMs:  scaling.TotalWorkMs,
+				Efficiency:   scaling.Efficiency,
+				Speedup:      scaling.ActualSpeedup,
+				CryptoTimeMs: crypto.TotalTimeMs,
+			}
+
+			// Measure operation time if patterns are provided
+			if e.StartPattern != "" && e.EndPattern != "" {
+				measurement, err := MeasureOperationAdvanced(profile, MeasureOptions{
+					StartPattern:       e.StartPattern,
+					EndPattern:         e.EndPattern,
+					FindLast:           true,
+					StartMinDurationMs: e.StartMinDuration,
+					EndMinDurationMs:   e.EndMinDuration,
+				})
+				if err == nil {
+					point.OperationTimeMs = measurement.OperationTimeMs
+				}
+			}
+
+			results <- profileResult{point: point, label: e.Label}
+		}(entry)
+	}
+
+	// Close results channel when all goroutines complete
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// Collect results
+	labelSet := make(map[string]bool)
+	for r := range results {
+		if r.err != nil {
+			return nil, r.err
 		}
-		result.Series[entry.Label] = append(result.Series[entry.Label], point)
-		labelSet[entry.Label] = true
+		if result.Series[r.label] == nil {
+			result.Series[r.label] = make([]ProfileDataPoint, 0)
+		}
+		result.Series[r.label] = append(result.Series[r.label], r.point)
+		labelSet[r.label] = true
 	}
 
 	// Sort each series by worker count

@@ -78,8 +78,14 @@ const (
 func DetectBottlenecks(profile *parser.Profile) []Bottleneck {
 	var bottlenecks []Bottleneck
 
-	// Collect all markers
-	var allMarkers []parser.ParsedMarker
+	// Pre-calculate total marker count for efficient allocation
+	totalMarkers := 0
+	for _, thread := range profile.Threads {
+		totalMarkers += thread.Markers.Length
+	}
+
+	// Collect all markers with pre-allocated slice
+	allMarkers := make([]parser.ParsedMarker, 0, totalMarkers)
 	for _, thread := range profile.Threads {
 		markers := parser.ExtractMarkers(&thread, profile.Meta.Categories)
 		allMarkers = append(allMarkers, markers...)
@@ -119,7 +125,12 @@ func DetectBottlenecks(profile *parser.Profile) []Bottleneck {
 }
 
 func detectLongTasks(markers []parser.ParsedMarker) *Bottleneck {
-	var longTasks []parser.ParsedMarker
+	// Pre-allocate with estimated ~5% match rate
+	estimatedCap := len(markers) / 20
+	if estimatedCap < 10 {
+		estimatedCap = 10
+	}
+	longTasks := make([]parser.ParsedMarker, 0, estimatedCap)
 	var totalDuration, maxDuration float64
 
 	// Max reasonable task duration (10 seconds) - anything longer is likely a profile span marker
@@ -168,7 +179,12 @@ func detectLongTasks(markers []parser.ParsedMarker) *Bottleneck {
 }
 
 func detectGCPressure(markers []parser.ParsedMarker, durationSec float64) *Bottleneck {
-	var gcMarkers []parser.ParsedMarker
+	// Pre-allocate with estimated ~5% match rate
+	estimatedCap := len(markers) / 20
+	if estimatedCap < 10 {
+		estimatedCap = 10
+	}
+	gcMarkers := make([]parser.ParsedMarker, 0, estimatedCap)
 	var totalDuration, maxDuration float64
 
 	// Max reasonable GC duration (5 seconds)
@@ -240,7 +256,12 @@ func detectGCPressure(markers []parser.ParsedMarker, durationSec float64) *Bottl
 }
 
 func detectSyncIPC(markers []parser.ParsedMarker) *Bottleneck {
-	var syncIPCMarkers []parser.ParsedMarker
+	// Pre-allocate with estimated ~5% match rate
+	estimatedCap := len(markers) / 20
+	if estimatedCap < 10 {
+		estimatedCap = 10
+	}
+	syncIPCMarkers := make([]parser.ParsedMarker, 0, estimatedCap)
 	var totalDuration, maxDuration float64
 
 	// Max reasonable IPC duration (2 seconds)
@@ -300,7 +321,12 @@ func detectSyncIPC(markers []parser.ParsedMarker) *Bottleneck {
 }
 
 func detectLayoutThrashing(markers []parser.ParsedMarker) *Bottleneck {
-	var layoutMarkers []parser.ParsedMarker
+	// Pre-allocate with estimated ~5% match rate
+	estimatedCap := len(markers) / 20
+	if estimatedCap < 10 {
+		estimatedCap = 10
+	}
+	layoutMarkers := make([]parser.ParsedMarker, 0, estimatedCap)
 	var totalDuration, maxDuration float64
 
 	// Max reasonable layout duration (1 second)
@@ -355,7 +381,12 @@ func detectLayoutThrashing(markers []parser.ParsedMarker) *Bottleneck {
 }
 
 func detectNetworkBlocking(markers []parser.ParsedMarker) *Bottleneck {
-	var networkMarkers []parser.ParsedMarker
+	// Pre-allocate with estimated ~2% match rate (network events are rarer)
+	estimatedCap := len(markers) / 50
+	if estimatedCap < 10 {
+		estimatedCap = 10
+	}
+	networkMarkers := make([]parser.ParsedMarker, 0, estimatedCap)
 	var totalDuration, maxDuration float64
 
 	// Max reasonable network duration (30 seconds)

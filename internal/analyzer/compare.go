@@ -3,6 +3,7 @@ package analyzer
 import (
 	"fmt"
 	"math"
+	"sync"
 
 	"github.com/CedricHerzog/perfowl/internal/parser"
 )
@@ -49,8 +50,19 @@ type DiffChanges struct {
 
 // CompareProfiles compares two profiles and returns differences
 func CompareProfiles(baseline, comparison *parser.Profile) ProfileDiff {
-	baseSummary := extractSummary(baseline, "baseline")
-	compSummary := extractSummary(comparison, "comparison")
+	// Extract summaries in parallel
+	var baseSummary, compSummary ProfileSummary
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		baseSummary = extractSummary(baseline, "baseline")
+	}()
+	go func() {
+		defer wg.Done()
+		compSummary = extractSummary(comparison, "comparison")
+	}()
+	wg.Wait()
 
 	diff := ProfileDiff{
 		Baseline:   baseSummary,

@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"sort"
+	"sync"
 
 	"github.com/CedricHerzog/perfowl/internal/parser"
 )
@@ -33,110 +34,47 @@ type ThreadAnalysis struct {
 
 // AnalyzeThreads performs detailed thread analysis
 func AnalyzeThreads(profile *parser.Profile) ThreadAnalysis {
+	numThreads := len(profile.Threads)
 	analysis := ThreadAnalysis{
-		TotalThreads: len(profile.Threads),
-		Threads:      make([]ThreadStats, 0, len(profile.Threads)),
+		TotalThreads: numThreads,
+		Threads:      make([]ThreadStats, numThreads),
 	}
 
-	// Map category index to name
+	if numThreads == 0 {
+		return analysis
+	}
+
+	// Map category index to name (shared, read-only)
 	categoryNames := make(map[int]string)
 	for i, cat := range profile.Meta.Categories {
 		categoryNames[i] = cat.Name
 	}
 
 	interval := profile.Meta.Interval
+	categories := profile.Meta.Categories
 
-	for _, thread := range profile.Threads {
-		stats := ThreadStats{
-			Name:         thread.Name,
-			ProcessType:  thread.ProcessType,
-			ProcessName:  thread.ProcessName,
-			PID:          thread.PID.String(),
-			TID:          thread.TID.String(),
-			IsMainThread: thread.IsMainThread,
-			SampleCount:  thread.Samples.Length,
-			MarkerCount:  thread.Markers.Length,
-		}
+	// Process threads in parallel
+	var wg sync.WaitGroup
+	for i := range profile.Threads {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			analysis.Threads[idx] = analyzeThread(&profile.Threads[idx], categoryNames, categories, interval)
+		}(i)
+	}
+	wg.Wait()
 
-		// Count process types
-		if thread.ProcessType == "default" || thread.ProcessType == "parent" {
-			analysis.ParentProcessThreads++
-		} else if thread.ProcessType == "tab" || thread.ProcessType == "web" {
-			analysis.ContentProcessThreads++
-		}
-
-		if thread.IsMainThread {
+	// Aggregate counts (sequential, fast)
+	for _, stats := range analysis.Threads {
+		if stats.IsMainThread {
 			analysis.MainThreadCount++
 		}
-
-		// Calculate CPU time from samples
-		categoryTime := make(map[string]float64)
-		for i := 0; i < thread.Samples.Length; i++ {
-			cpuDelta := 0.0
-			if i < len(thread.Samples.ThreadCPUDelta) && thread.Samples.ThreadCPUDelta[i] > 0 {
-				cpuDelta = float64(thread.Samples.ThreadCPUDelta[i]) / 1000.0
-			} else {
-				cpuDelta = interval
-			}
-			stats.CPUTimeMs += cpuDelta
-
-			// Track category distribution
-			stackIdx := -1
-			if i < len(thread.Samples.Stack) {
-				stackIdx = thread.Samples.Stack[i]
-			}
-			if stackIdx >= 0 && stackIdx < len(thread.StackTable.Category) {
-				catIdx := thread.StackTable.Category[stackIdx]
-				catName := categoryNames[catIdx]
-				if catName == "" {
-					catName = "Unknown"
-				}
-				categoryTime[catName] += cpuDelta
-			}
+		switch stats.ProcessType {
+		case "default", "parent":
+			analysis.ParentProcessThreads++
+		case "tab", "web":
+			analysis.ContentProcessThreads++
 		}
-
-		// Count Awake markers for wake analysis
-		markers := parser.ExtractMarkers(&thread, profile.Meta.Categories)
-		var awakeTimes []float64
-		for _, m := range markers {
-			if m.Name == "Awake" || m.Type == "Awake" {
-				stats.WakeCount++
-				awakeTimes = append(awakeTimes, m.StartTime)
-			}
-		}
-
-		// Calculate average wake interval
-		if len(awakeTimes) > 1 {
-			sort.Float64s(awakeTimes)
-			totalInterval := 0.0
-			for i := 1; i < len(awakeTimes); i++ {
-				totalInterval += awakeTimes[i] - awakeTimes[i-1]
-			}
-			stats.AvgWakeIntervalMs = totalInterval / float64(len(awakeTimes)-1)
-		}
-
-		// Get top 5 categories
-		var cats []CategoryStats
-		for name, time := range categoryTime {
-			percent := 0.0
-			if stats.CPUTimeMs > 0 {
-				percent = (time / stats.CPUTimeMs) * 100
-			}
-			cats = append(cats, CategoryStats{
-				Name:    name,
-				TimeMs:  time,
-				Percent: percent,
-			})
-		}
-		sort.Slice(cats, func(i, j int) bool {
-			return cats[i].TimeMs > cats[j].TimeMs
-		})
-		if len(cats) > 5 {
-			cats = cats[:5]
-		}
-		stats.TopCategories = cats
-
-		analysis.Threads = append(analysis.Threads, stats)
 	}
 
 	// Sort threads by CPU time descending
@@ -145,4 +83,87 @@ func AnalyzeThreads(profile *parser.Profile) ThreadAnalysis {
 	})
 
 	return analysis
+}
+
+// analyzeThread processes a single thread and returns its stats
+func analyzeThread(thread *parser.Thread, categoryNames map[int]string, categories []parser.Category, interval float64) ThreadStats {
+	stats := ThreadStats{
+		Name:         thread.Name,
+		ProcessType:  thread.ProcessType,
+		ProcessName:  thread.ProcessName,
+		PID:          thread.PID.String(),
+		TID:          thread.TID.String(),
+		IsMainThread: thread.IsMainThread,
+		SampleCount:  thread.Samples.Length,
+		MarkerCount:  thread.Markers.Length,
+	}
+
+	// Calculate CPU time from samples
+	categoryTime := make(map[string]float64)
+	for i := 0; i < thread.Samples.Length; i++ {
+		cpuDelta := 0.0
+		if i < len(thread.Samples.ThreadCPUDelta) && thread.Samples.ThreadCPUDelta[i] > 0 {
+			cpuDelta = float64(thread.Samples.ThreadCPUDelta[i]) / 1000.0
+		} else {
+			cpuDelta = interval
+		}
+		stats.CPUTimeMs += cpuDelta
+
+		// Track category distribution
+		stackIdx := -1
+		if i < len(thread.Samples.Stack) {
+			stackIdx = thread.Samples.Stack[i]
+		}
+		if stackIdx >= 0 && stackIdx < len(thread.StackTable.Category) {
+			catIdx := thread.StackTable.Category[stackIdx]
+			catName := categoryNames[catIdx]
+			if catName == "" {
+				catName = "Unknown"
+			}
+			categoryTime[catName] += cpuDelta
+		}
+	}
+
+	// Count Awake markers for wake analysis
+	markers := parser.ExtractMarkers(thread, categories)
+	var awakeTimes []float64
+	for _, m := range markers {
+		if m.Name == "Awake" || m.Type == "Awake" {
+			stats.WakeCount++
+			awakeTimes = append(awakeTimes, m.StartTime)
+		}
+	}
+
+	// Calculate average wake interval
+	if len(awakeTimes) > 1 {
+		sort.Float64s(awakeTimes)
+		totalInterval := 0.0
+		for i := 1; i < len(awakeTimes); i++ {
+			totalInterval += awakeTimes[i] - awakeTimes[i-1]
+		}
+		stats.AvgWakeIntervalMs = totalInterval / float64(len(awakeTimes)-1)
+	}
+
+	// Get top 5 categories
+	var cats []CategoryStats
+	for name, time := range categoryTime {
+		percent := 0.0
+		if stats.CPUTimeMs > 0 {
+			percent = (time / stats.CPUTimeMs) * 100
+		}
+		cats = append(cats, CategoryStats{
+			Name:    name,
+			TimeMs:  time,
+			Percent: percent,
+		})
+	}
+	sort.Slice(cats, func(i, j int) bool {
+		return cats[i].TimeMs > cats[j].TimeMs
+	})
+	if len(cats) > 5 {
+		cats = cats[:5]
+	}
+	stats.TopCategories = cats
+
+	return stats
 }
