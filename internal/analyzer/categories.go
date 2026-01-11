@@ -8,16 +8,16 @@ import (
 
 // CategoryStats contains timing information for a single category
 type CategoryStats struct {
-	Name       string  `json:"name"`
-	TimeMs     float64 `json:"time_ms"`
-	Percent    float64 `json:"percent"`
-	SampleCount int    `json:"sample_count"`
+	Name        string  `json:"name"`
+	TimeMs      float64 `json:"time_ms"`
+	Percent     float64 `json:"percent"`
+	SampleCount int     `json:"sample_count"`
 }
 
 // CategoryBreakdown contains the full category analysis
 type CategoryBreakdown struct {
-	TotalTimeMs float64                   `json:"total_time_ms"`
-	Categories  []CategoryStats           `json:"categories"`
+	TotalTimeMs float64                    `json:"total_time_ms"`
+	Categories  []CategoryStats            `json:"categories"`
 	ByThread    map[string][]CategoryStats `json:"by_thread,omitempty"`
 }
 

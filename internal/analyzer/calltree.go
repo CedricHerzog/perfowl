@@ -30,11 +30,11 @@ type HotPath struct {
 
 // CallTreeAnalysis contains the call tree analysis results
 type CallTreeAnalysis struct {
-	TotalTimeMs   float64         `json:"total_time_ms"`
-	TotalSamples  int             `json:"total_samples"`
-	TopFunctions  []FunctionStats `json:"top_functions"`
-	HotPaths      []HotPath       `json:"hot_paths"`
-	ThreadName    string          `json:"thread_name,omitempty"`
+	TotalTimeMs  float64         `json:"total_time_ms"`
+	TotalSamples int             `json:"total_samples"`
+	TopFunctions []FunctionStats `json:"top_functions"`
+	HotPaths     []HotPath       `json:"hot_paths"`
+	ThreadName   string          `json:"thread_name,omitempty"`
 }
 
 // AnalyzeCallTree builds a call tree and identifies hot paths

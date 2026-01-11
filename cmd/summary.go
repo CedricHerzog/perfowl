@@ -22,23 +22,23 @@ func init() {
 }
 
 type ProfileSummary struct {
-	BrowserType     string             `json:"browser_type"`
-	Duration        float64            `json:"duration_seconds"`
-	Platform        string             `json:"platform"`
-	OSCPU           string             `json:"os_cpu"`
-	Product         string             `json:"product"`
-	BuildID         string             `json:"build_id"`
-	CPUName         string             `json:"cpu_name"`
-	PhysicalCPUs    int                `json:"physical_cpus"`
-	LogicalCPUs     int                `json:"logical_cpus"`
-	ThreadCount     int                `json:"thread_count"`
-	MainThreadCount int                `json:"main_thread_count"`
-	ExtensionCount  int                `json:"extension_count"`
-	Extensions      map[string]string  `json:"extensions"`
-	Features        []string           `json:"features"`
-	Categories      []string           `json:"categories"`
-	TotalMarkers    int                `json:"total_markers"`
-	TotalSamples    int                `json:"total_samples"`
+	BrowserType     string            `json:"browser_type"`
+	Duration        float64           `json:"duration_seconds"`
+	Platform        string            `json:"platform"`
+	OSCPU           string            `json:"os_cpu"`
+	Product         string            `json:"product"`
+	BuildID         string            `json:"build_id"`
+	CPUName         string            `json:"cpu_name"`
+	PhysicalCPUs    int               `json:"physical_cpus"`
+	LogicalCPUs     int               `json:"logical_cpus"`
+	ThreadCount     int               `json:"thread_count"`
+	MainThreadCount int               `json:"main_thread_count"`
+	ExtensionCount  int               `json:"extension_count"`
+	Extensions      map[string]string `json:"extensions"`
+	Features        []string          `json:"features"`
+	Categories      []string          `json:"categories"`
+	TotalMarkers    int               `json:"total_markers"`
+	TotalSamples    int               `json:"total_samples"`
 }
 
 func runSummary(cmd *cobra.Command, args []string) error {

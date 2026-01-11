@@ -8,27 +8,27 @@ import (
 
 // ThreadStats contains analysis for a single thread
 type ThreadStats struct {
-	Name          string  `json:"name"`
-	ProcessType   string  `json:"process_type"`
-	ProcessName   string  `json:"process_name"`
-	PID           string  `json:"pid"`
-	TID           string  `json:"tid"`
-	IsMainThread  bool    `json:"is_main_thread"`
-	CPUTimeMs     float64 `json:"cpu_time_ms"`
-	SampleCount   int     `json:"sample_count"`
-	MarkerCount   int     `json:"marker_count"`
-	WakeCount     int     `json:"wake_count"`
-	AvgWakeIntervalMs float64 `json:"avg_wake_interval_ms,omitempty"`
-	TopCategories []CategoryStats `json:"top_categories,omitempty"`
+	Name              string          `json:"name"`
+	ProcessType       string          `json:"process_type"`
+	ProcessName       string          `json:"process_name"`
+	PID               string          `json:"pid"`
+	TID               string          `json:"tid"`
+	IsMainThread      bool            `json:"is_main_thread"`
+	CPUTimeMs         float64         `json:"cpu_time_ms"`
+	SampleCount       int             `json:"sample_count"`
+	MarkerCount       int             `json:"marker_count"`
+	WakeCount         int             `json:"wake_count"`
+	AvgWakeIntervalMs float64         `json:"avg_wake_interval_ms,omitempty"`
+	TopCategories     []CategoryStats `json:"top_categories,omitempty"`
 }
 
 // ThreadAnalysis contains the full thread analysis
 type ThreadAnalysis struct {
-	TotalThreads     int           `json:"total_threads"`
-	MainThreadCount  int           `json:"main_thread_count"`
-	ParentProcessThreads int       `json:"parent_process_threads"`
-	ContentProcessThreads int      `json:"content_process_threads"`
-	Threads          []ThreadStats `json:"threads"`
+	TotalThreads          int           `json:"total_threads"`
+	MainThreadCount       int           `json:"main_thread_count"`
+	ParentProcessThreads  int           `json:"parent_process_threads"`
+	ContentProcessThreads int           `json:"content_process_threads"`
+	Threads               []ThreadStats `json:"threads"`
 }
 
 // AnalyzeThreads performs detailed thread analysis

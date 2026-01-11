@@ -10,29 +10,29 @@ import (
 
 // chromeCategoryMap maps Chrome categories to Firefox-style categories
 var chromeCategoryMap = map[string]string{
-	"devtools.timeline":                            "JavaScript",
-	"disabled-by-default-devtools.timeline":        "Other",
-	"disabled-by-default-devtools.timeline.frame":  "Graphics",
-	"disabled-by-default-devtools.timeline.stack":  "JavaScript",
-	"v8":                          "JavaScript",
-	"v8.execute":                  "JavaScript",
-	"v8.compile":                  "JavaScript",
-	"disabled-by-default-v8.gc":   "GC / CC",
+	"devtools.timeline":                           "JavaScript",
+	"disabled-by-default-devtools.timeline":       "Other",
+	"disabled-by-default-devtools.timeline.frame": "Graphics",
+	"disabled-by-default-devtools.timeline.stack": "JavaScript",
+	"v8":                                  "JavaScript",
+	"v8.execute":                          "JavaScript",
+	"v8.compile":                          "JavaScript",
+	"disabled-by-default-v8.gc":           "GC / CC",
 	"disabled-by-default-v8.cpu_profiler": "JavaScript",
-	"blink":                       "Layout",
-	"blink.user_timing":           "UserTiming",
-	"blink.console":               "JavaScript",
-	"loading":                     "Network",
-	"net":                         "Network",
-	"netlog":                      "Network",
-	"gpu":                         "Graphics",
-	"cc":                          "Graphics",
-	"viz":                         "Graphics",
-	"benchmark":                   "Other",
-	"rail":                        "Other",
-	"__metadata":                  "Other",
-	"toplevel":                    "Other",
-	"ipc":                         "IPC",
+	"blink":                               "Layout",
+	"blink.user_timing":                   "UserTiming",
+	"blink.console":                       "JavaScript",
+	"loading":                             "Network",
+	"net":                                 "Network",
+	"netlog":                              "Network",
+	"gpu":                                 "Graphics",
+	"cc":                                  "Graphics",
+	"viz":                                 "Graphics",
+	"benchmark":                           "Other",
+	"rail":                                "Other",
+	"__metadata":                          "Other",
+	"toplevel":                            "Other",
+	"ipc":                                 "IPC",
 }
 
 // chromeConverter handles conversion of Chrome profiles to Firefox format
@@ -78,15 +78,15 @@ type threadBuilder struct {
 	markerPhases     []int
 
 	// Samples (from V8 ProfileChunk)
-	sampleStacks        []int
-	sampleTimes         []float64
-	sampleWeights       []int
-	sampleCPUDeltas     []int
+	sampleStacks    []int
+	sampleTimes     []float64
+	sampleWeights   []int
+	sampleCPUDeltas []int
 
 	// Stack/Frame/Func tables
-	stackFrames    []int
+	stackFrames     []int
 	stackCategories []int
-	stackPrefixes  []int
+	stackPrefixes   []int
 
 	frameAddresses    []any
 	frameInlineDepths []int
@@ -99,18 +99,18 @@ type threadBuilder struct {
 	frameLines        []any
 	frameCols         []any
 
-	funcNames         []int
-	funcIsJS          []bool
-	funcRelevant      []bool
-	funcResources     []int
-	funcFileNames     []int
-	funcLineNumbers   []int
-	funcColNumbers    []int
+	funcNames       []int
+	funcIsJS        []bool
+	funcRelevant    []bool
+	funcResources   []int
+	funcFileNames   []int
+	funcLineNumbers []int
+	funcColNumbers  []int
 
 	// Helper maps for deduplication
-	funcMap   map[string]int // key: "name|url|line" -> funcIndex
-	frameMap  map[string]int // key: "funcIdx|category" -> frameIndex
-	stackMap  map[string]int // key: "frameIdx|prefixIdx" -> stackIndex
+	funcMap  map[string]int // key: "name|url|line" -> funcIndex
+	frameMap map[string]int // key: "funcIdx|category" -> frameIndex
+	stackMap map[string]int // key: "frameIdx|prefixIdx" -> stackIndex
 }
 
 // ConvertChromeToProfile converts a Chrome trace to Firefox Profile structure

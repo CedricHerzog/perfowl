@@ -9,14 +9,14 @@ import (
 
 // ExtensionReport contains analysis for a single extension
 type ExtensionReport struct {
-	ID            string         `json:"id"`
-	Name          string         `json:"name"`
-	BaseURL       string         `json:"base_url"`
-	TotalDuration float64        `json:"total_duration_ms"`
-	MarkersCount  int            `json:"markers_count"`
-	DOMEvents     int            `json:"dom_events"`
-	IPCMessages   int            `json:"ipc_messages"`
-	ImpactScore   string         `json:"impact_score"`
+	ID            string          `json:"id"`
+	Name          string          `json:"name"`
+	BaseURL       string          `json:"base_url"`
+	TotalDuration float64         `json:"total_duration_ms"`
+	MarkersCount  int             `json:"markers_count"`
+	DOMEvents     int             `json:"dom_events"`
+	IPCMessages   int             `json:"ipc_messages"`
+	ImpactScore   string          `json:"impact_score"`
 	TopMarkers    []MarkerSummary `json:"top_markers,omitempty"`
 }
 

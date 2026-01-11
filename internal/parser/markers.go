@@ -9,24 +9,24 @@ import (
 type MarkerType string
 
 const (
-	MarkerTypeGCMajor          MarkerType = "GCMajor"
-	MarkerTypeGCMinor          MarkerType = "GCMinor"
-	MarkerTypeGCSlice          MarkerType = "GCSlice"
-	MarkerTypeCC               MarkerType = "CC"
-	MarkerTypeCCSlice          MarkerType = "CCSlice"
-	MarkerTypeDOMEvent         MarkerType = "DOMEvent"
-	MarkerTypeStyles           MarkerType = "Styles"
-	MarkerTypeUserTiming       MarkerType = "UserTiming"
+	MarkerTypeGCMajor            MarkerType = "GCMajor"
+	MarkerTypeGCMinor            MarkerType = "GCMinor"
+	MarkerTypeGCSlice            MarkerType = "GCSlice"
+	MarkerTypeCC                 MarkerType = "CC"
+	MarkerTypeCCSlice            MarkerType = "CCSlice"
+	MarkerTypeDOMEvent           MarkerType = "DOMEvent"
+	MarkerTypeStyles             MarkerType = "Styles"
+	MarkerTypeUserTiming         MarkerType = "UserTiming"
 	MarkerTypeMainThreadLongTask MarkerType = "MainThreadLongTask"
-	MarkerTypeTracing          MarkerType = "tracing"
-	MarkerTypeChannelMarker    MarkerType = "ChannelMarker"
-	MarkerTypeHostResolver     MarkerType = "HostResolver"
-	MarkerTypeJSActorMessage   MarkerType = "JSActorMessage"
-	MarkerTypeFrameMessage     MarkerType = "FrameMessage"
-	MarkerTypeAwake            MarkerType = "Awake"
-	MarkerTypeText             MarkerType = "Text"
-	MarkerTypePreference       MarkerType = "Preference"
-	MarkerTypeIPC              MarkerType = "IPC"
+	MarkerTypeTracing            MarkerType = "tracing"
+	MarkerTypeChannelMarker      MarkerType = "ChannelMarker"
+	MarkerTypeHostResolver       MarkerType = "HostResolver"
+	MarkerTypeJSActorMessage     MarkerType = "JSActorMessage"
+	MarkerTypeFrameMessage       MarkerType = "FrameMessage"
+	MarkerTypeAwake              MarkerType = "Awake"
+	MarkerTypeText               MarkerType = "Text"
+	MarkerTypePreference         MarkerType = "Preference"
+	MarkerTypeIPC                MarkerType = "IPC"
 )
 
 // ParsedMarker represents a parsed marker with type-specific data
@@ -158,9 +158,9 @@ type MarkerStats struct {
 
 func GetMarkerStats(markers []ParsedMarker) MarkerStats {
 	stats := MarkerStats{
-		TotalCount: len(markers),
-		ByType:     make(map[string]int),
-		ByCategory: make(map[string]int),
+		TotalCount:  len(markers),
+		ByType:      make(map[string]int),
+		ByCategory:  make(map[string]int),
 		MinDuration: -1,
 	}
 

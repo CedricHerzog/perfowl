@@ -18,14 +18,14 @@ type ChromeProfile struct {
 
 // ChromeMetadata contains profile metadata
 type ChromeMetadata struct {
-	EnhancedTraceVersion int         `json:"enhancedTraceVersion"`
-	Source               string      `json:"source"`
-	StartTime            string      `json:"startTime"`
-	DataOrigin           string      `json:"dataOrigin"`
-	HostDPR              float64     `json:"hostDPR"`
-	SourceMaps           []any       `json:"sourceMaps"`
-	Resources            []any       `json:"resources"`
-	Modifications        any         `json:"modifications"` // Can be object or array
+	EnhancedTraceVersion int     `json:"enhancedTraceVersion"`
+	Source               string  `json:"source"`
+	StartTime            string  `json:"startTime"`
+	DataOrigin           string  `json:"dataOrigin"`
+	HostDPR              float64 `json:"hostDPR"`
+	SourceMaps           []any   `json:"sourceMaps"`
+	Resources            []any   `json:"resources"`
+	Modifications        any     `json:"modifications"` // Can be object or array
 }
 
 // ChromeEvent represents a single trace event
@@ -47,24 +47,24 @@ type ChromeEvent struct {
 
 // Chrome event phase constants
 const (
-	PhaseBegin       = "B" // Duration event begin
-	PhaseEnd         = "E" // Duration event end
-	PhaseDuration    = "X" // Complete duration event
-	PhaseMetadata    = "M" // Metadata event
-	PhaseInstant     = "I" // Instant event
-	PhaseCounter     = "C" // Counter event
-	PhaseAsyncStart  = "S" // Async event start (deprecated, use b)
-	PhaseAsyncEnd    = "F" // Async event end (deprecated, use e)
-	PhaseAsyncBegin  = "b" // Async nestable begin
-	PhaseAsyncEnd2   = "e" // Async nestable end
-	PhaseAsyncStep   = "n" // Async nestable step
-	PhaseFlowStart   = "s" // Flow event start
-	PhaseFlowEnd     = "f" // Flow event end
-	PhaseSample      = "P" // Sample event (V8 profiler)
-	PhaseObject      = "O" // Object snapshot
-	PhaseCreate      = "N" // Object created
-	PhaseDestroy     = "D" // Object destroyed
-	PhaseMark        = "R" // Mark event
+	PhaseBegin      = "B" // Duration event begin
+	PhaseEnd        = "E" // Duration event end
+	PhaseDuration   = "X" // Complete duration event
+	PhaseMetadata   = "M" // Metadata event
+	PhaseInstant    = "I" // Instant event
+	PhaseCounter    = "C" // Counter event
+	PhaseAsyncStart = "S" // Async event start (deprecated, use b)
+	PhaseAsyncEnd   = "F" // Async event end (deprecated, use e)
+	PhaseAsyncBegin = "b" // Async nestable begin
+	PhaseAsyncEnd2  = "e" // Async nestable end
+	PhaseAsyncStep  = "n" // Async nestable step
+	PhaseFlowStart  = "s" // Flow event start
+	PhaseFlowEnd    = "f" // Flow event end
+	PhaseSample     = "P" // Sample event (V8 profiler)
+	PhaseObject     = "O" // Object snapshot
+	PhaseCreate     = "N" // Object created
+	PhaseDestroy    = "D" // Object destroyed
+	PhaseMark       = "R" // Mark event
 )
 
 // V8CPUProfile represents V8's CPU profile data embedded in ProfileChunk events

@@ -155,15 +155,15 @@ func detectLongTasks(markers []parser.ParsedMarker) *Bottleneck {
 	}
 
 	return &Bottleneck{
-		Type:          "Long Tasks",
-		Severity:      severity,
-		Count:         len(longTasks),
-		TotalDuration: totalDuration,
-		AvgDuration:   totalDuration / float64(len(longTasks)),
-		MaxDuration:   maxDuration,
-		Description:   fmt.Sprintf("%d tasks blocked the main thread for >%.0fms", len(longTasks), LongTaskThresholdMs),
+		Type:           "Long Tasks",
+		Severity:       severity,
+		Count:          len(longTasks),
+		TotalDuration:  totalDuration,
+		AvgDuration:    totalDuration / float64(len(longTasks)),
+		MaxDuration:    maxDuration,
+		Description:    fmt.Sprintf("%d tasks blocked the main thread for >%.0fms", len(longTasks), LongTaskThresholdMs),
 		Recommendation: "Investigate long-running JavaScript and consider breaking into smaller chunks or using Web Workers",
-		Locations:     locations,
+		Locations:      locations,
 	}
 }
 
@@ -215,15 +215,15 @@ func detectGCPressure(markers []parser.ParsedMarker, durationSec float64) *Bottl
 	}
 
 	return &Bottleneck{
-		Type:          "GC Pressure",
-		Severity:      severity,
-		Count:         len(gcMarkers),
-		TotalDuration: totalDuration,
-		AvgDuration:   totalDuration / float64(len(gcMarkers)),
-		MaxDuration:   maxDuration,
-		Description:   fmt.Sprintf("%.1f GC events/sec with %.0fms total pause time (max: %.2fms)", gcPerSec, totalDuration, maxDuration),
+		Type:           "GC Pressure",
+		Severity:       severity,
+		Count:          len(gcMarkers),
+		TotalDuration:  totalDuration,
+		AvgDuration:    totalDuration / float64(len(gcMarkers)),
+		MaxDuration:    maxDuration,
+		Description:    fmt.Sprintf("%.1f GC events/sec with %.0fms total pause time (max: %.2fms)", gcPerSec, totalDuration, maxDuration),
 		Recommendation: "Reduce object allocations, consider object pooling, and avoid creating unnecessary temporary objects",
-		Locations:     locations,
+		Locations:      locations,
 	}
 }
 
@@ -276,14 +276,14 @@ func detectSyncIPC(markers []parser.ParsedMarker) *Bottleneck {
 	}
 
 	return &Bottleneck{
-		Type:          "Synchronous IPC",
-		Severity:      severity,
-		Count:         len(syncIPCMarkers),
-		TotalDuration: totalDuration,
-		MaxDuration:   maxDuration,
-		Description:   fmt.Sprintf("%d synchronous IPC calls blocking threads for %.0fms total", len(syncIPCMarkers), totalDuration),
+		Type:           "Synchronous IPC",
+		Severity:       severity,
+		Count:          len(syncIPCMarkers),
+		TotalDuration:  totalDuration,
+		MaxDuration:    maxDuration,
+		Description:    fmt.Sprintf("%d synchronous IPC calls blocking threads for %.0fms total", len(syncIPCMarkers), totalDuration),
 		Recommendation: "Consider using async IPC alternatives to avoid blocking the main thread",
-		Locations:     locations,
+		Locations:      locations,
 	}
 }
 
@@ -331,14 +331,14 @@ func detectLayoutThrashing(markers []parser.ParsedMarker) *Bottleneck {
 	}
 
 	return &Bottleneck{
-		Type:          "Layout Thrashing",
-		Severity:      severity,
-		Count:         thrashingCount,
-		TotalDuration: totalDuration,
-		MaxDuration:   maxDuration,
-		Description:   fmt.Sprintf("%d rapid layout recalculations detected, causing %.0fms of layout work", thrashingCount, totalDuration),
+		Type:           "Layout Thrashing",
+		Severity:       severity,
+		Count:          thrashingCount,
+		TotalDuration:  totalDuration,
+		MaxDuration:    maxDuration,
+		Description:    fmt.Sprintf("%d rapid layout recalculations detected, causing %.0fms of layout work", thrashingCount, totalDuration),
 		Recommendation: "Batch DOM reads and writes separately, use requestAnimationFrame for visual updates",
-		Locations:     []string{},
+		Locations:      []string{},
 	}
 }
 
@@ -384,14 +384,14 @@ func detectNetworkBlocking(markers []parser.ParsedMarker) *Bottleneck {
 	}
 
 	return &Bottleneck{
-		Type:          "Network Blocking",
-		Severity:      severity,
-		Count:         len(networkMarkers),
-		TotalDuration: totalDuration,
-		MaxDuration:   maxDuration,
-		Description:   fmt.Sprintf("%d slow network requests (>%.0fms each)", len(networkMarkers), NetworkBlockingMs),
+		Type:           "Network Blocking",
+		Severity:       severity,
+		Count:          len(networkMarkers),
+		TotalDuration:  totalDuration,
+		MaxDuration:    maxDuration,
+		Description:    fmt.Sprintf("%d slow network requests (>%.0fms each)", len(networkMarkers), NetworkBlockingMs),
 		Recommendation: "Optimize slow requests, consider caching, or load resources asynchronously",
-		Locations:     locations,
+		Locations:      locations,
 	}
 }
 
@@ -467,13 +467,13 @@ func detectExtensionOverhead(markers []parser.ParsedMarker, profile *parser.Prof
 	}
 
 	return &Bottleneck{
-		Type:          "Extension Overhead",
-		Severity:      severity,
-		Count:         totalCount,
-		TotalDuration: totalDuration,
-		Description:   fmt.Sprintf("%d extension-related events consuming %.0fms", totalCount, totalDuration),
+		Type:           "Extension Overhead",
+		Severity:       severity,
+		Count:          totalCount,
+		TotalDuration:  totalDuration,
+		Description:    fmt.Sprintf("%d extension-related events consuming %.0fms", totalCount, totalDuration),
 		Recommendation: "Review extension activity, consider disabling extensions during performance-critical operations",
-		Locations:     locations,
+		Locations:      locations,
 	}
 }
 

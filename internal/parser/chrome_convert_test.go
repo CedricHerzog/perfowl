@@ -191,7 +191,7 @@ func TestConvertChromeToProfile_DurationEvents(t *testing.T) {
 				Cat:  "devtools.timeline",
 				Ph:   "X",
 				Ts:   1000000, // 1 second in microseconds
-				Dur:  50000,  // 50ms in microseconds
+				Dur:  50000,   // 50ms in microseconds
 				Pid:  1,
 				Tid:  1,
 				Args: json.RawMessage(`{"data":{"functionName":"test"}}`),

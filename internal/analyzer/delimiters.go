@@ -10,12 +10,13 @@ import (
 
 // DelimiterMarker represents a potential start/end point for operation timing
 type DelimiterMarker struct {
-	TimeMs   float64                `json:"time_ms"`
-	Name     string                 `json:"name"`
-	Type     string                 `json:"type"`
-	Category string                 `json:"category"`
-	Thread   string                 `json:"thread"`
-	Data     map[string]interface{} `json:"data,omitempty"`
+	TimeMs     float64                `json:"time_ms"`
+	DurationMs float64                `json:"duration_ms,omitempty"`
+	Name       string                 `json:"name"`
+	Type       string                 `json:"type"`
+	Category   string                 `json:"category"`
+	Thread     string                 `json:"thread"`
+	Data       map[string]interface{} `json:"data,omitempty"`
 }
 
 // OperationMeasurement is the result of measuring between two delimiters
@@ -27,17 +28,17 @@ type OperationMeasurement struct {
 
 // Delimiter marker types that are useful for operation timing
 var delimiterTypes = map[string]bool{
-	"DOMEvent":          true, // click, input, submit - operation start (Firefox)
-	"EventDispatch":     true, // click, input, submit - operation start (Chrome)
-	"UserTiming":        true, // performance.mark() - explicit markers
-	"Styles":            true, // DOM style recalculation (Firefox)
-	"UpdateLayoutTree":  true, // DOM style recalculation (Chrome)
-	"Reflow":            true, // Layout reflow
-	"Paint":             true, // Visual paint
-	"Composite":         true, // GPU compositing
+	"DOMEvent":           true, // click, input, submit - operation start (Firefox)
+	"EventDispatch":      true, // click, input, submit - operation start (Chrome)
+	"UserTiming":         true, // performance.mark() - explicit markers
+	"Styles":             true, // DOM style recalculation (Firefox)
+	"UpdateLayoutTree":   true, // DOM style recalculation (Chrome)
+	"Reflow":             true, // Layout reflow
+	"Paint":              true, // Visual paint
+	"Composite":          true, // GPU compositing
 	"MainThreadLongTask": true, // Long tasks
-	"Navigation":        true, // Page navigation events
-	"Load":              true, // Load events
+	"Navigation":         true, // Page navigation events
+	"Load":               true, // Load events
 }
 
 // GetDelimiterMarkers returns markers suitable for operation timing from all threads
@@ -63,12 +64,13 @@ func GetDelimiterMarkers(profile *parser.Profile, categories []string) []Delimit
 			}
 
 			dm := DelimiterMarker{
-				TimeMs:   m.StartTime,
-				Name:     m.Name,
-				Type:     string(m.Type),
-				Category: m.Category,
-				Thread:   m.ThreadName,
-				Data:     m.Data,
+				TimeMs:     m.StartTime,
+				DurationMs: m.Duration,
+				Name:       m.Name,
+				Type:       string(m.Type),
+				Category:   m.Category,
+				Thread:     m.ThreadName,
+				Data:       m.Data,
 			}
 
 			allMarkers = append(allMarkers, dm)
@@ -103,18 +105,53 @@ func isDelimiterMarker(m parser.ParsedMarker) bool {
 	return false
 }
 
+// MeasureOptions contains options for MeasureOperationAdvanced
+type MeasureOptions struct {
+	StartPattern       string  // Pattern to match start marker
+	EndPattern         string  // Pattern to match end marker
+	StartAfterMs       float64 // Only consider markers after this time
+	EndBeforeMs        float64 // Only consider markers before this time
+	FindLast           bool    // If true, find the LAST matching end marker
+	StartMinDurationMs float64 // Only match start markers with duration >= this value
+	EndMinDurationMs   float64 // Only match end markers with duration >= this value
+}
+
 // MeasureOperation finds start/end markers matching patterns and returns duration
 func MeasureOperation(profile *parser.Profile, startPattern, endPattern string, startAfterMs, endBeforeMs float64) (*OperationMeasurement, error) {
-	return MeasureOperationWithOptions(profile, startPattern, endPattern, startAfterMs, endBeforeMs, false)
+	return MeasureOperationAdvanced(profile, MeasureOptions{
+		StartPattern: startPattern,
+		EndPattern:   endPattern,
+		StartAfterMs: startAfterMs,
+		EndBeforeMs:  endBeforeMs,
+		FindLast:     false,
+	})
 }
 
 // MeasureOperationLast finds the first start marker and LAST end marker matching patterns
 func MeasureOperationLast(profile *parser.Profile, startPattern, endPattern string, startAfterMs, endBeforeMs float64) (*OperationMeasurement, error) {
-	return MeasureOperationWithOptions(profile, startPattern, endPattern, startAfterMs, endBeforeMs, true)
+	return MeasureOperationAdvanced(profile, MeasureOptions{
+		StartPattern: startPattern,
+		EndPattern:   endPattern,
+		StartAfterMs: startAfterMs,
+		EndBeforeMs:  endBeforeMs,
+		FindLast:     true,
+	})
 }
 
 // MeasureOperationWithOptions finds start/end markers with option to find last end marker
+// Deprecated: Use MeasureOperationAdvanced for new code
 func MeasureOperationWithOptions(profile *parser.Profile, startPattern, endPattern string, startAfterMs, endBeforeMs float64, findLast bool) (*OperationMeasurement, error) {
+	return MeasureOperationAdvanced(profile, MeasureOptions{
+		StartPattern: startPattern,
+		EndPattern:   endPattern,
+		StartAfterMs: startAfterMs,
+		EndBeforeMs:  endBeforeMs,
+		FindLast:     findLast,
+	})
+}
+
+// MeasureOperationAdvanced finds start/end markers with full control over matching options
+func MeasureOperationAdvanced(profile *parser.Profile, opts MeasureOptions) (*OperationMeasurement, error) {
 	allMarkers := GetDelimiterMarkers(profile, nil)
 
 	if len(allMarkers) == 0 {
@@ -125,17 +162,20 @@ func MeasureOperationWithOptions(profile *parser.Profile, startPattern, endPatte
 	var startMarker *DelimiterMarker
 	for i := range allMarkers {
 		m := &allMarkers[i]
-		if startAfterMs > 0 && m.TimeMs < startAfterMs {
+		if opts.StartAfterMs > 0 && m.TimeMs < opts.StartAfterMs {
 			continue
 		}
-		if MatchMarkerPattern(*m, startPattern) {
+		if opts.StartMinDurationMs > 0 && m.DurationMs < opts.StartMinDurationMs {
+			continue
+		}
+		if MatchMarkerPattern(*m, opts.StartPattern) {
 			startMarker = m
 			break
 		}
 	}
 
 	if startMarker == nil {
-		return nil, fmt.Errorf("no marker matching start pattern '%s' found", startPattern)
+		return nil, fmt.Errorf("no marker matching start pattern '%s' found", opts.StartPattern)
 	}
 
 	// Find end marker (after start marker)
@@ -145,11 +185,14 @@ func MeasureOperationWithOptions(profile *parser.Profile, startPattern, endPatte
 		if m.TimeMs <= startMarker.TimeMs {
 			continue
 		}
-		if endBeforeMs > 0 && m.TimeMs > endBeforeMs {
+		if opts.EndBeforeMs > 0 && m.TimeMs > opts.EndBeforeMs {
 			continue
 		}
-		if MatchMarkerPattern(*m, endPattern) {
-			if findLast {
+		if opts.EndMinDurationMs > 0 && m.DurationMs < opts.EndMinDurationMs {
+			continue
+		}
+		if MatchMarkerPattern(*m, opts.EndPattern) {
+			if opts.FindLast {
 				// Keep updating to find the last match
 				endMarker = &allMarkers[i]
 			} else {
@@ -161,7 +204,7 @@ func MeasureOperationWithOptions(profile *parser.Profile, startPattern, endPatte
 	}
 
 	if endMarker == nil {
-		return nil, fmt.Errorf("no marker matching end pattern '%s' found after start marker", endPattern)
+		return nil, fmt.Errorf("no marker matching end pattern '%s' found after start marker", opts.EndPattern)
 	}
 
 	return &OperationMeasurement{

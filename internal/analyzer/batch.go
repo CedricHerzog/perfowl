@@ -9,11 +9,13 @@ import (
 
 // ProfileEntry defines a single profile to analyze with its metadata
 type ProfileEntry struct {
-	Path         string `json:"path" yaml:"path"`
-	WorkerCount  int    `json:"workers" yaml:"workers"`
-	Label        string `json:"label" yaml:"label"`
-	StartPattern string `json:"start_pattern,omitempty" yaml:"start_pattern,omitempty"`
-	EndPattern   string `json:"end_pattern,omitempty" yaml:"end_pattern,omitempty"`
+	Path             string  `json:"path" yaml:"path"`
+	WorkerCount      int     `json:"workers" yaml:"workers"`
+	Label            string  `json:"label" yaml:"label"`
+	StartPattern     string  `json:"start_pattern,omitempty" yaml:"start_pattern,omitempty"`
+	EndPattern       string  `json:"end_pattern,omitempty" yaml:"end_pattern,omitempty"`
+	StartMinDuration float64 `json:"start_min_duration,omitempty" yaml:"start_min_duration,omitempty"`
+	EndMinDuration   float64 `json:"end_min_duration,omitempty" yaml:"end_min_duration,omitempty"`
 }
 
 // ProfileDataPoint represents metrics for a single profile
@@ -95,7 +97,13 @@ func AnalyzeBatch(profiles []ProfileEntry) (*BatchAnalysisResult, error) {
 
 		// Measure operation time if patterns are provided (uses find_last for full operation duration)
 		if entry.StartPattern != "" && entry.EndPattern != "" {
-			measurement, err := MeasureOperationLast(profile, entry.StartPattern, entry.EndPattern, 0, 0)
+			measurement, err := MeasureOperationAdvanced(profile, MeasureOptions{
+				StartPattern:       entry.StartPattern,
+				EndPattern:         entry.EndPattern,
+				FindLast:           true,
+				StartMinDurationMs: entry.StartMinDuration,
+				EndMinDurationMs:   entry.EndMinDuration,
+			})
 			if err == nil {
 				point.OperationTimeMs = measurement.OperationTimeMs
 			}

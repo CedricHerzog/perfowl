@@ -20,14 +20,14 @@ type CryptoOperation struct {
 
 // CryptoAnalysis contains the full crypto operation analysis
 type CryptoAnalysis struct {
-	TotalOperations int               `json:"total_operations"`
-	TotalTimeMs     float64           `json:"total_time_ms"`
+	TotalOperations int                `json:"total_operations"`
+	TotalTimeMs     float64            `json:"total_time_ms"`
 	ByOperation     map[string]float64 `json:"by_operation"`
 	ByAlgorithm     map[string]float64 `json:"by_algorithm"`
 	ByThread        map[string]float64 `json:"by_thread"`
-	TopOperations   []CryptoOperation `json:"top_operations,omitempty"`
-	Serialized      bool              `json:"possibly_serialized"`
-	Warnings        []string          `json:"warnings,omitempty"`
+	TopOperations   []CryptoOperation  `json:"top_operations,omitempty"`
+	Serialized      bool               `json:"possibly_serialized"`
+	Warnings        []string           `json:"warnings,omitempty"`
 }
 
 // cryptoKeywords are function name patterns that indicate crypto operations

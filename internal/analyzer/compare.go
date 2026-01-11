@@ -9,12 +9,12 @@ import (
 
 // ProfileDiff contains comparison between two profiles
 type ProfileDiff struct {
-	Baseline    ProfileSummary   `json:"baseline"`
-	Comparison  ProfileSummary   `json:"comparison"`
-	Changes     DiffChanges      `json:"changes"`
-	Improved    []string         `json:"improved"`
-	Regressed   []string         `json:"regressed"`
-	Unchanged   []string         `json:"unchanged"`
+	Baseline   ProfileSummary `json:"baseline"`
+	Comparison ProfileSummary `json:"comparison"`
+	Changes    DiffChanges    `json:"changes"`
+	Improved   []string       `json:"improved"`
+	Regressed  []string       `json:"regressed"`
+	Unchanged  []string       `json:"unchanged"`
 }
 
 // ProfileSummary contains key metrics for comparison

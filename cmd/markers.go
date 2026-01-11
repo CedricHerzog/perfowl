@@ -39,10 +39,10 @@ func init() {
 }
 
 type MarkerOutput struct {
-	TotalCount int                     `json:"total_count"`
-	FilteredBy string                  `json:"filtered_by,omitempty"`
-	Stats      parser.MarkerStats      `json:"stats"`
-	Markers    []parser.ParsedMarker   `json:"markers,omitempty"`
+	TotalCount int                   `json:"total_count"`
+	FilteredBy string                `json:"filtered_by,omitempty"`
+	Stats      parser.MarkerStats    `json:"stats"`
+	Markers    []parser.ParsedMarker `json:"markers,omitempty"`
 }
 
 func runMarkers(cmd *cobra.Command, args []string) error {

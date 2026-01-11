@@ -17,32 +17,32 @@ type Shared struct {
 
 // Meta contains profile metadata
 type Meta struct {
-	Interval                            float64       `json:"interval"`
-	StartTime                           float64       `json:"startTime"`
-	ProfilingStartTime                  float64       `json:"profilingStartTime"`
-	ProfilingEndTime                    float64       `json:"profilingEndTime"`
-	ABI                                 string        `json:"abi"`
-	OSCPU                               string        `json:"oscpu"`
-	Platform                            string        `json:"platform"`
-	ProcessType                         int           `json:"processType"`
-	Product                             string        `json:"product"`
-	Version                             int           `json:"version"`
-	Stackwalk                           int           `json:"stackwalk"`
-	Debug                               bool          `json:"debug"`
-	Toolkit                             string        `json:"toolkit"`
-	CPUName                             string        `json:"CPUName"`
-	PhysicalCPUs                        int           `json:"physicalCPUs"`
-	LogicalCPUs                         int           `json:"logicalCPUs"`
-	Symbolicated                        bool          `json:"symbolicated"`
-	UpdateChannel                       string        `json:"updateChannel"`
-	AppBuildID                          string        `json:"appBuildID"`
-	SourceURL                           string        `json:"sourceURL"`
-	PreprocessedProfileVersion          int           `json:"preprocessedProfileVersion"`
-	Extensions                          Extensions    `json:"extensions"`
-	Categories                          []Category    `json:"categories"`
-	MarkerSchema                        []MarkerSchema `json:"markerSchema"`
-	Configuration                       Configuration `json:"configuration"`
-	SampleUnits                         SampleUnits   `json:"sampleUnits"`
+	Interval                   float64        `json:"interval"`
+	StartTime                  float64        `json:"startTime"`
+	ProfilingStartTime         float64        `json:"profilingStartTime"`
+	ProfilingEndTime           float64        `json:"profilingEndTime"`
+	ABI                        string         `json:"abi"`
+	OSCPU                      string         `json:"oscpu"`
+	Platform                   string         `json:"platform"`
+	ProcessType                int            `json:"processType"`
+	Product                    string         `json:"product"`
+	Version                    int            `json:"version"`
+	Stackwalk                  int            `json:"stackwalk"`
+	Debug                      bool           `json:"debug"`
+	Toolkit                    string         `json:"toolkit"`
+	CPUName                    string         `json:"CPUName"`
+	PhysicalCPUs               int            `json:"physicalCPUs"`
+	LogicalCPUs                int            `json:"logicalCPUs"`
+	Symbolicated               bool           `json:"symbolicated"`
+	UpdateChannel              string         `json:"updateChannel"`
+	AppBuildID                 string         `json:"appBuildID"`
+	SourceURL                  string         `json:"sourceURL"`
+	PreprocessedProfileVersion int            `json:"preprocessedProfileVersion"`
+	Extensions                 Extensions     `json:"extensions"`
+	Categories                 []Category     `json:"categories"`
+	MarkerSchema               []MarkerSchema `json:"markerSchema"`
+	Configuration              Configuration  `json:"configuration"`
+	SampleUnits                SampleUnits    `json:"sampleUnits"`
 }
 
 // Extensions contains information about installed browser extensions
@@ -101,24 +101,24 @@ type Lib struct {
 
 // Thread represents a profiled thread
 type Thread struct {
-	Name             string          `json:"name"`
-	IsMainThread     bool            `json:"isMainThread"`
-	ProcessType      string          `json:"processType"`
-	ProcessName      string          `json:"processName"`
-	ProcessStartupTime float64       `json:"processStartupTime"`
-	ProcessShutdownTime *float64     `json:"processShutdownTime"`
-	RegisterTime     float64         `json:"registerTime"`
-	UnregisterTime   *float64        `json:"unregisterTime"`
-	PID              json.Number     `json:"pid"`
-	TID              json.Number     `json:"tid"`
-	Samples          Samples         `json:"samples"`
-	Markers          Markers         `json:"markers"`
-	StackTable       StackTable      `json:"stackTable"`
-	FrameTable       FrameTable      `json:"frameTable"`
-	StringArray      []string        `json:"stringArray"`
-	FuncTable        FuncTable       `json:"funcTable"`
-	ResourceTable    ResourceTable   `json:"resourceTable"`
-	NativeSymbols    NativeSymbols   `json:"nativeSymbols"`
+	Name                string        `json:"name"`
+	IsMainThread        bool          `json:"isMainThread"`
+	ProcessType         string        `json:"processType"`
+	ProcessName         string        `json:"processName"`
+	ProcessStartupTime  float64       `json:"processStartupTime"`
+	ProcessShutdownTime *float64      `json:"processShutdownTime"`
+	RegisterTime        float64       `json:"registerTime"`
+	UnregisterTime      *float64      `json:"unregisterTime"`
+	PID                 json.Number   `json:"pid"`
+	TID                 json.Number   `json:"tid"`
+	Samples             Samples       `json:"samples"`
+	Markers             Markers       `json:"markers"`
+	StackTable          StackTable    `json:"stackTable"`
+	FrameTable          FrameTable    `json:"frameTable"`
+	StringArray         []string      `json:"stringArray"`
+	FuncTable           FuncTable     `json:"funcTable"`
+	ResourceTable       ResourceTable `json:"resourceTable"`
+	NativeSymbols       NativeSymbols `json:"nativeSymbols"`
 }
 
 // Samples contains sample data
@@ -144,47 +144,47 @@ type Markers struct {
 
 // StackTable contains stack frame information
 type StackTable struct {
-	Length   int    `json:"length"`
-	Frame    []int  `json:"frame"`
-	Category []int  `json:"category"`
-	Prefix   []int  `json:"prefix"`
+	Length   int   `json:"length"`
+	Frame    []int `json:"frame"`
+	Category []int `json:"category"`
+	Prefix   []int `json:"prefix"`
 }
 
 // FrameTable contains frame information
 // Note: Some fields use interface{} to handle large numbers that overflow int64
 type FrameTable struct {
-	Length           int           `json:"length"`
-	Address          []interface{} `json:"address"`
-	InlineDepth      []int         `json:"inlineDepth"`
-	Category         []int         `json:"category"`
-	Subcategory      []int         `json:"subcategory"`
-	Func             []int         `json:"func"`
-	NativeSymbol     []interface{} `json:"nativeSymbol"`
-	InnerWindowID    []interface{} `json:"innerWindowID"`
-	Implementation   []interface{} `json:"implementation"`
-	Line             []interface{} `json:"line"`
-	Column           []interface{} `json:"column"`
+	Length         int           `json:"length"`
+	Address        []interface{} `json:"address"`
+	InlineDepth    []int         `json:"inlineDepth"`
+	Category       []int         `json:"category"`
+	Subcategory    []int         `json:"subcategory"`
+	Func           []int         `json:"func"`
+	NativeSymbol   []interface{} `json:"nativeSymbol"`
+	InnerWindowID  []interface{} `json:"innerWindowID"`
+	Implementation []interface{} `json:"implementation"`
+	Line           []interface{} `json:"line"`
+	Column         []interface{} `json:"column"`
 }
 
 // FuncTable contains function information
 type FuncTable struct {
-	Length       int    `json:"length"`
-	Name         []int  `json:"name"`
-	IsJS         []bool `json:"isJS"`
+	Length        int    `json:"length"`
+	Name          []int  `json:"name"`
+	IsJS          []bool `json:"isJS"`
 	RelevantForJS []bool `json:"relevantForJS"`
-	Resource     []int  `json:"resource"`
-	FileName     []int  `json:"fileName"`
-	LineNumber   []int  `json:"lineNumber"`
-	ColumnNumber []int  `json:"columnNumber"`
+	Resource      []int  `json:"resource"`
+	FileName      []int  `json:"fileName"`
+	LineNumber    []int  `json:"lineNumber"`
+	ColumnNumber  []int  `json:"columnNumber"`
 }
 
 // ResourceTable contains resource information
 type ResourceTable struct {
-	Length int    `json:"length"`
-	Lib    []int  `json:"lib"`
-	Name   []int  `json:"name"`
-	Host   []int  `json:"host"`
-	Type   []int  `json:"type"`
+	Length int   `json:"length"`
+	Lib    []int `json:"lib"`
+	Name   []int `json:"name"`
+	Host   []int `json:"host"`
+	Type   []int `json:"type"`
 }
 
 // NativeSymbols contains native symbol information

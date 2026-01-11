@@ -155,14 +155,14 @@ func (pos *PerfOwlServer) registerTools() {
 	// batch_analyze tool
 	batchTool := mcp.NewTool("batch_analyze",
 		mcp.WithDescription("Analyze multiple profiles across worker counts and return aggregated results for charting. Provide a JSON array of profile entries."),
-		mcp.WithString("profiles", mcp.Required(), mcp.Description(`JSON array of profile entries. Each entry: {"path": "file.json.gz", "workers": 4, "label": "Chrome"}`)),
+		mcp.WithString("profiles", mcp.Required(), mcp.Description(`JSON array of profile entries. Each entry: {"path": "file.json.gz", "workers": 4, "label": "Chrome", "start_pattern": "EventDispatch", "end_pattern": "UpdateLayoutTree", "start_min_duration": 0, "end_min_duration": 1000}`)),
 	)
 	pos.server.AddTool(batchTool, pos.handleBatchAnalyze)
 
 	// generate_chart tool
 	chartTool := mcp.NewTool("generate_chart",
 		mcp.WithDescription("Generate SVG chart from batch analysis of multiple profiles"),
-		mcp.WithString("profiles", mcp.Required(), mcp.Description(`JSON array of profile entries. Each entry: {"path": "file.json.gz", "workers": 4, "label": "Chrome"}`)),
+		mcp.WithString("profiles", mcp.Required(), mcp.Description(`JSON array of profile entries. Each entry: {"path": "file.json.gz", "workers": 4, "label": "Chrome", "start_pattern": "EventDispatch", "end_pattern": "UpdateLayoutTree", "start_min_duration": 0, "end_min_duration": 1000}`)),
 		mcp.WithString("chart_type", mcp.Description("Chart type: wall_clock, efficiency, speedup, crypto_time, operation_time (default: wall_clock)")),
 		mcp.WithString("output", mcp.Description("Output mode: inline (returns SVG), file (saves to path)")),
 		mcp.WithString("output_path", mcp.Description("File path for 'file' output mode (default: chart.svg)")),
@@ -189,6 +189,8 @@ func (pos *PerfOwlServer) registerTools() {
 		mcp.WithNumber("start_index", mcp.Description("Alternative: use marker index instead of pattern for start")),
 		mcp.WithNumber("end_index", mcp.Description("Alternative: use marker index instead of pattern for end")),
 		mcp.WithBoolean("find_last", mcp.Description("If true, find the LAST matching end marker instead of the first (for full operation time)")),
+		mcp.WithNumber("start_min_duration", mcp.Description("Only match start markers with duration >= this value in ms (optional)")),
+		mcp.WithNumber("end_min_duration", mcp.Description("Only match end markers with duration >= this value in ms (optional)")),
 	)
 	pos.server.AddTool(measureTool, pos.handleMeasureOperation)
 }
@@ -825,22 +827,32 @@ func (pos *PerfOwlServer) handleMeasureOperation(ctx context.Context, req mcp.Ca
 		return nil, fmt.Errorf("end_pattern is required: %w", err)
 	}
 
-	startAfterMs := 0.0
+	opts := analyzer.MeasureOptions{
+		StartPattern: startPattern,
+		EndPattern:   endPattern,
+	}
+
 	if s, err := req.RequireFloat("start_after_ms"); err == nil {
-		startAfterMs = s
+		opts.StartAfterMs = s
 	}
 
-	endBeforeMs := 0.0
 	if e, err := req.RequireFloat("end_before_ms"); err == nil {
-		endBeforeMs = e
+		opts.EndBeforeMs = e
 	}
 
-	findLast := false
 	if fl, err := req.RequireBool("find_last"); err == nil {
-		findLast = fl
+		opts.FindLast = fl
 	}
 
-	measurement, err := analyzer.MeasureOperationWithOptions(profile, startPattern, endPattern, startAfterMs, endBeforeMs, findLast)
+	if sd, err := req.RequireFloat("start_min_duration"); err == nil {
+		opts.StartMinDurationMs = sd
+	}
+
+	if ed, err := req.RequireFloat("end_min_duration"); err == nil {
+		opts.EndMinDurationMs = ed
+	}
+
+	measurement, err := analyzer.MeasureOperationAdvanced(profile, opts)
 	if err != nil {
 		return nil, fmt.Errorf("measurement failed: %w", err)
 	}

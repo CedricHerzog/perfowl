@@ -10,32 +10,32 @@ import (
 
 // JSCryptoResource represents a JavaScript crypto resource/worker
 type JSCryptoResource struct {
-	Name       string  `json:"name"`
-	URL        string  `json:"url,omitempty"`
-	TotalTime  float64 `json:"total_time_ms"`
-	SampleCount int    `json:"sample_count"`
-	ThreadName string  `json:"thread_name"`
+	Name        string  `json:"name"`
+	URL         string  `json:"url,omitempty"`
+	TotalTime   float64 `json:"total_time_ms"`
+	SampleCount int     `json:"sample_count"`
+	ThreadName  string  `json:"thread_name"`
 }
 
 // JSCryptoFunction represents a function within a crypto resource
 type JSCryptoFunction struct {
-	Name       string  `json:"name"`
-	Resource   string  `json:"resource"`
-	TotalTime  float64 `json:"total_time_ms"`
-	SampleCount int    `json:"sample_count"`
-	Percent    float64 `json:"percent"`
+	Name        string  `json:"name"`
+	Resource    string  `json:"resource"`
+	TotalTime   float64 `json:"total_time_ms"`
+	SampleCount int     `json:"sample_count"`
+	Percent     float64 `json:"percent"`
 }
 
 // JSCryptoAnalysis contains JavaScript-level crypto analysis
 type JSCryptoAnalysis struct {
-	TotalTimeMs      float64             `json:"total_time_ms"`
-	TotalSamples     int                 `json:"total_samples"`
-	Resources        []JSCryptoResource  `json:"resources"`
-	TopFunctions     []JSCryptoFunction  `json:"top_functions"`
-	ByThread         map[string]float64  `json:"by_thread"`
-	WorkerCount      int                 `json:"worker_count"`
-	AvgTimePerWorker float64             `json:"avg_time_per_worker_ms"`
-	Recommendations  []string            `json:"recommendations,omitempty"`
+	TotalTimeMs      float64            `json:"total_time_ms"`
+	TotalSamples     int                `json:"total_samples"`
+	Resources        []JSCryptoResource `json:"resources"`
+	TopFunctions     []JSCryptoFunction `json:"top_functions"`
+	ByThread         map[string]float64 `json:"by_thread"`
+	WorkerCount      int                `json:"worker_count"`
+	AvgTimePerWorker float64            `json:"avg_time_per_worker_ms"`
+	Recommendations  []string           `json:"recommendations,omitempty"`
 }
 
 // cryptoResourcePatterns identifies JS files that do crypto work
@@ -207,9 +207,9 @@ func isNumeric(s string) bool {
 // AnalyzeJSCrypto analyzes JavaScript-level crypto operations
 func AnalyzeJSCrypto(profile *parser.Profile) JSCryptoAnalysis {
 	analysis := JSCryptoAnalysis{
-		Resources:    make([]JSCryptoResource, 0),
-		TopFunctions: make([]JSCryptoFunction, 0),
-		ByThread:     make(map[string]float64),
+		Resources:       make([]JSCryptoResource, 0),
+		TopFunctions:    make([]JSCryptoFunction, 0),
+		ByThread:        make(map[string]float64),
 		Recommendations: make([]string, 0),
 	}
 
@@ -280,8 +280,8 @@ func AnalyzeJSCrypto(profile *parser.Profile) JSCryptoAnalysis {
 		// Chrome profiles have the file URL in FuncTable.FileName
 		// IMPORTANT: Only consider JS functions (isJS=true) to avoid counting native code
 		cryptoResourceIdx := make(map[int]string) // resourceIdx -> extracted file name
-		cryptoResourceFile := ""                   // Track the crypto file for this thread
-		hasOpenPGPFunctions := false               // Track if OpenPGP functions found (for bundled code)
+		cryptoResourceFile := ""                  // Track the crypto file for this thread
+		hasOpenPGPFunctions := false              // Track if OpenPGP functions found (for bundled code)
 
 		for funcIdx, funcName := range funcIdxToName {
 			// Skip non-JS functions - they might reference crypto files but aren't running crypto code
