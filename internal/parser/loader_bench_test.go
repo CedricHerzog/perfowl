@@ -133,13 +133,13 @@ func tempProfileFile(b *testing.B, profile *parser.Profile) string {
 	if err != nil {
 		b.Fatalf("failed to create temp file: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if _, err := f.Write(data); err != nil {
 		b.Fatalf("failed to write profile: %v", err)
 	}
 
-	b.Cleanup(func() { os.Remove(f.Name()) })
+	b.Cleanup(func() { _ = os.Remove(f.Name()) })
 	return f.Name()
 }
 
@@ -155,15 +155,15 @@ func tempGzipProfileFile(b *testing.B, profile *parser.Profile) string {
 	if err != nil {
 		b.Fatalf("failed to create temp file: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gz := gzip.NewWriter(f)
 	if _, err := gz.Write(data); err != nil {
 		b.Fatalf("failed to write profile: %v", err)
 	}
-	gz.Close()
+	_ = gz.Close()
 
-	b.Cleanup(func() { os.Remove(f.Name()) })
+	b.Cleanup(func() { _ = os.Remove(f.Name()) })
 	return f.Name()
 }
 
@@ -175,13 +175,13 @@ func tempChromeFile(b *testing.B, data []byte) string {
 	if err != nil {
 		b.Fatalf("failed to create temp file: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if _, err := f.Write(data); err != nil {
 		b.Fatalf("failed to write chrome trace: %v", err)
 	}
 
-	b.Cleanup(func() { os.Remove(f.Name()) })
+	b.Cleanup(func() { _ = os.Remove(f.Name()) })
 	return f.Name()
 }
 

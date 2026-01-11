@@ -132,9 +132,9 @@ func TestAnalyzeCallTree_PercentCalculation(t *testing.T) {
 
 func TestFormatCallTree_Output(t *testing.T) {
 	analysis := CallTreeAnalysis{
-		TotalTimeMs:   1000,
-		TotalSamples:  100,
-		ThreadName:    "GeckoMain",
+		TotalTimeMs:  1000,
+		TotalSamples: 100,
+		ThreadName:   "GeckoMain",
 		TopFunctions: []FunctionStats{
 			{Name: "main", SelfTimeMs: 500, RunningTimeMs: 1000, SelfPercent: 50, TotalPercent: 100},
 		},

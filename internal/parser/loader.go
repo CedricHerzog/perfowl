@@ -16,7 +16,7 @@ func LoadProfile(path string) (*Profile, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open profile: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var reader io.Reader = file
 
@@ -27,7 +27,7 @@ func LoadProfile(path string) (*Profile, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
 		}
-		defer gzReader.Close()
+		defer func() { _ = gzReader.Close() }()
 		reader = gzReader
 	}
 

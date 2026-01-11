@@ -163,9 +163,9 @@ func TestCalculateImpactScore_Medium(t *testing.T) {
 	// Scoring: duration >500: +2, markers >100: +1, IPC >50: +1 = 4 (medium)
 	// score >= 5: high, >= 3: medium, else low
 	report := &ExtensionReport{
-		TotalDuration: 600,  // >500: +2
-		MarkersCount:  200,  // >100: +1
-		IPCMessages:   60,   // >50: +1
+		TotalDuration: 600, // >500: +2
+		MarkersCount:  200, // >100: +1
+		IPCMessages:   60,  // >50: +1
 	}
 	// Total: 4, which is >= 3 but < 5 = medium
 

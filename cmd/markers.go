@@ -14,6 +14,7 @@ import (
 var (
 	markerType     string
 	markerCategory string
+	markerName     string
 	minDuration    float64
 	limit          int
 )
@@ -34,6 +35,7 @@ func init() {
 	rootCmd.AddCommand(markersCmd)
 	markersCmd.Flags().StringVarP(&markerType, "type", "t", "", "Filter by marker type (e.g., GCMajor, DOMEvent)")
 	markersCmd.Flags().StringVarP(&markerCategory, "category", "c", "", "Filter by category (e.g., JavaScript, Layout)")
+	markersCmd.Flags().StringVarP(&markerName, "name", "n", "", "Filter by marker name pattern (case-insensitive substring match)")
 	markersCmd.Flags().Float64VarP(&minDuration, "min-duration", "d", 0, "Minimum duration in ms")
 	markersCmd.Flags().IntVarP(&limit, "limit", "l", 0, "Limit number of results (0 = unlimited)")
 }
@@ -75,6 +77,11 @@ func runMarkers(cmd *cobra.Command, args []string) error {
 	if markerCategory != "" {
 		filtered = parser.FilterMarkersByCategory(filtered, markerCategory)
 		filterDesc = append(filterDesc, fmt.Sprintf("category=%s", markerCategory))
+	}
+
+	if markerName != "" {
+		filtered = parser.FilterMarkersByName(filtered, markerName)
+		filterDesc = append(filterDesc, fmt.Sprintf("name=%s", markerName))
 	}
 
 	if minDuration > 0 {

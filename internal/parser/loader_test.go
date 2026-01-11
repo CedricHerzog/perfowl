@@ -79,8 +79,8 @@ func TestLoadProfile_GzipCompressed(t *testing.T) {
 	if err := enc.Encode(profile); err != nil {
 		t.Fatalf("failed to encode: %v", err)
 	}
-	gw.Close()
-	f.Close()
+	_ = gw.Close()
+	_ = f.Close()
 
 	// Load the profile
 	loaded, err := LoadProfile(path)
@@ -115,8 +115,8 @@ func TestLoadProfile_GzipExtension(t *testing.T) {
 	if err := enc.Encode(profile); err != nil {
 		t.Fatalf("failed to encode: %v", err)
 	}
-	gw.Close()
-	f.Close()
+	_ = gw.Close()
+	_ = f.Close()
 
 	loaded, err := LoadProfile(path)
 	if err != nil {

@@ -394,7 +394,7 @@ func AnalyzeJSCrypto(profile *parser.Profile) JSCryptoAnalysis {
 		// Use the crypto file name for this thread (if found)
 		if cryptoResourceFile == "" && len(cryptoResourceIdx) > 0 {
 			for _, f := range cryptoResourceIdx {
-				cryptoResourceFile = f
+				_ = f // cryptoResourceFile was used earlier for filtering
 				break
 			}
 		}

@@ -69,7 +69,6 @@ type threadBuilder struct {
 	name        string
 	pid         int
 	tid         int
-	processType string
 	processName string
 
 	// Markers (from duration events)

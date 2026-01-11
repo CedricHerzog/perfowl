@@ -53,10 +53,11 @@ func (pos *PerfOwlServer) registerTools() {
 
 	// get_markers tool
 	markersTool := mcp.NewTool("get_markers",
-		mcp.WithDescription("Extract and analyze markers from the profile, optionally filtered by type or category"),
+		mcp.WithDescription("Extract and analyze markers from the profile, optionally filtered by type, category, or name"),
 		mcp.WithString("path", mcp.Required(), mcp.Description("Path to the profile JSON file")),
 		mcp.WithString("type", mcp.Description("Filter by marker type (e.g., GCMajor, DOMEvent, JSActorMessage)")),
 		mcp.WithString("category", mcp.Description("Filter by category (e.g., JavaScript, Layout, Network)")),
+		mcp.WithString("name", mcp.Description("Filter by marker name pattern (case-insensitive substring match)")),
 		mcp.WithNumber("min_duration", mcp.Description("Minimum duration in milliseconds")),
 		mcp.WithNumber("limit", mcp.Description("Maximum number of markers to return")),
 	)
@@ -288,6 +289,10 @@ func (pos *PerfOwlServer) handleGetMarkers(ctx context.Context, req mcp.CallTool
 
 	if category, err := req.RequireString("category"); err == nil && category != "" {
 		filtered = parser.FilterMarkersByCategory(filtered, category)
+	}
+
+	if name, err := req.RequireString("name"); err == nil && name != "" {
+		filtered = parser.FilterMarkersByName(filtered, name)
 	}
 
 	if minDur, err := req.RequireFloat("min_duration"); err == nil && minDur > 0 {
@@ -767,9 +772,7 @@ func (pos *PerfOwlServer) handleGetDelimiterMarkers(ctx context.Context, req mcp
 
 	var categories []string
 	if cats, err := req.RequireString("categories"); err == nil && cats != "" {
-		for _, c := range splitAndTrim(cats) {
-			categories = append(categories, c)
-		}
+		categories = append(categories, splitAndTrim(cats)...)
 	}
 
 	limit := 0

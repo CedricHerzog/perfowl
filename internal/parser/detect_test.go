@@ -177,11 +177,11 @@ func TestDetectBrowserType_GzipFile(t *testing.T) {
 
 	gzWriter := gzip.NewWriter(f)
 	if _, err := gzWriter.Write(data); err != nil {
-		f.Close()
+		_ = f.Close()
 		t.Fatalf("Failed to write gzip data: %v", err)
 	}
-	gzWriter.Close()
-	f.Close()
+	_ = gzWriter.Close()
+	_ = f.Close()
 
 	browserType, err := DetectBrowserType(gzPath)
 	if err != nil {

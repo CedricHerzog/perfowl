@@ -30,10 +30,10 @@ func TempGzipProfileFile(t testing.TB, profile *parser.Profile) string {
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gw := gzip.NewWriter(f)
-	defer gw.Close()
+	defer func() { _ = gw.Close() }()
 
 	enc := json.NewEncoder(gw)
 	if err := enc.Encode(profile); err != nil {
@@ -75,10 +75,10 @@ func TempGzipJSONFile(t testing.TB, content interface{}, filename string) string
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gw := gzip.NewWriter(f)
-	defer gw.Close()
+	defer func() { _ = gw.Close() }()
 
 	enc := json.NewEncoder(gw)
 	if err := enc.Encode(content); err != nil {
@@ -128,7 +128,7 @@ func TempGzipChromeProfile(t testing.TB, data []byte) string {
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	gw := gzip.NewWriter(f)
 	if _, err := gw.Write(data); err != nil {
