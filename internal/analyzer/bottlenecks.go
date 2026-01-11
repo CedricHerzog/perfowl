@@ -175,10 +175,22 @@ func detectGCPressure(markers []parser.ParsedMarker, durationSec float64) *Bottl
 	const maxReasonableGCDuration = 5000.0
 
 	for _, m := range markers {
-		// Match Firefox GC markers (GCMajor, GCMinor, etc.) and Chrome GC events (V8.GC_*)
-		isGC := strings.HasPrefix(m.Name, "GC") ||
-			strings.HasPrefix(m.Name, "V8.GC") ||
-			m.Category == "GC / CC"
+		// Match Firefox GC markers (GCMajor, GCMinor, etc.) and Chrome GC events
+		// Note: Only match top-level GC pause events, not sub-phases
+		isGC := false
+		switch {
+		case strings.HasPrefix(m.Name, "GCMajor"),
+			strings.HasPrefix(m.Name, "GCMinor"),
+			strings.HasPrefix(m.Name, "GCSlice"):
+			// Firefox GC markers
+			isGC = true
+		case m.Name == "MajorGC" || m.Name == "MinorGC":
+			// Chrome DevTools GC markers
+			isGC = true
+		case m.Name == "V8.GC_SCAVENGER" || m.Name == "V8.GC_MARK_COMPACTOR":
+			// V8 top-level GC pause events (scavenger = minor, mark-compactor = major)
+			isGC = true
+		}
 		if isGC {
 			// Only count markers with reasonable positive durations
 			if m.Duration > 0 && m.Duration < maxReasonableGCDuration {

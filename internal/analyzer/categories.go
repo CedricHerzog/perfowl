@@ -68,9 +68,18 @@ func AnalyzeCategories(profile *parser.Profile, threadName string) CategoryBreak
 			}
 
 			// Get category from stack
+			// Chrome profiles have category in StackTable.Category (populated by converter)
+			// Firefox profiles have category in FrameTable.Category (need to look up via frame)
 			catIdx := -1
-			if stackIdx < len(thread.StackTable.Category) {
+			if len(thread.StackTable.Category) > 0 && stackIdx < len(thread.StackTable.Category) {
+				// Chrome path: category stored directly in StackTable
 				catIdx = thread.StackTable.Category[stackIdx]
+			} else if stackIdx < len(thread.StackTable.Frame) {
+				// Firefox path: get frame index, then look up category from FrameTable
+				frameIdx := thread.StackTable.Frame[stackIdx]
+				if frameIdx >= 0 && frameIdx < len(thread.FrameTable.Category) {
+					catIdx = thread.FrameTable.Category[frameIdx]
+				}
 			}
 
 			catName := "Unknown"

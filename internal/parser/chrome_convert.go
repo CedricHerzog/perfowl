@@ -53,6 +53,9 @@ type chromeConverter struct {
 	// Profile events (ph="P") indicate which thread is being profiled
 	// ProfileChunk events reference this via their "id" field
 	profileTargets map[string]profileTarget
+
+	// Track extensions discovered from chrome-extension:// URLs
+	extensions map[string]bool // extension ID -> seen
 }
 
 // profileTarget stores the thread being profiled by a V8 CPU profile session
@@ -126,6 +129,7 @@ func ConvertChromeToProfile(chrome *ChromeProfile) (*Profile, error) {
 		minTime:        -1,
 		maxTime:        0,
 		profileTargets: make(map[string]profileTarget),
+		extensions:     make(map[string]bool),
 	}
 
 	// Build category lookup
@@ -475,6 +479,8 @@ func (c *chromeConverter) getCategoryForCallFrame(cf *V8CallFrame) int {
 	// Determine category based on URL or function name
 	url := cf.URL
 	if strings.Contains(url, "chrome-extension://") {
+		// Extract and track extension ID
+		c.extractExtensionID(url)
 		return c.categoryMap["Other"]
 	}
 	if strings.HasPrefix(url, "http") || strings.HasPrefix(url, "file") {
@@ -484,6 +490,51 @@ func (c *chromeConverter) getCategoryForCallFrame(cf *V8CallFrame) int {
 		return c.categoryMap["Other"]
 	}
 	return c.categoryMap["JavaScript"]
+}
+
+// extractExtensionID extracts and tracks extension IDs from chrome-extension:// URLs
+func (c *chromeConverter) extractExtensionID(url string) {
+	// URL format: chrome-extension://EXTENSION_ID/path/to/file.js
+	const prefix = "chrome-extension://"
+	if !strings.HasPrefix(url, prefix) {
+		return
+	}
+	rest := url[len(prefix):]
+	// Find the end of the extension ID (next slash or end of string)
+	slashIdx := strings.Index(rest, "/")
+	var extID string
+	if slashIdx > 0 {
+		extID = rest[:slashIdx]
+	} else {
+		extID = rest
+	}
+	if extID != "" && len(extID) == 32 { // Chrome extension IDs are 32 chars
+		c.extensions[extID] = true
+	}
+}
+
+// buildExtensions creates the Extensions struct from discovered extension IDs
+func (c *chromeConverter) buildExtensions() Extensions {
+	if len(c.extensions) == 0 {
+		return Extensions{}
+	}
+
+	ids := make([]string, 0, len(c.extensions))
+	names := make([]string, 0, len(c.extensions))
+	baseURLs := make([]string, 0, len(c.extensions))
+
+	for extID := range c.extensions {
+		ids = append(ids, extID)
+		names = append(names, extID) // Use ID as name since we don't have the actual name
+		baseURLs = append(baseURLs, "chrome-extension://"+extID+"/")
+	}
+
+	return Extensions{
+		Length:  len(ids),
+		ID:      ids,
+		Name:    names,
+		BaseURL: baseURLs,
+	}
 }
 
 func (c *chromeConverter) getOrCreateThread(pid, tid int) *threadBuilder {
@@ -561,6 +612,9 @@ func (c *chromeConverter) buildProfile() (*Profile, error) {
 		}
 	}
 
+	// Build extensions metadata from discovered extension IDs
+	extensions := c.buildExtensions()
+
 	profile := &Profile{
 		Meta: Meta{
 			Interval:           1.0, // Default 1ms interval
@@ -571,6 +625,7 @@ func (c *chromeConverter) buildProfile() (*Profile, error) {
 			Version:            1,
 			Platform:           "Chrome DevTools",
 			Categories:         c.categories,
+			Extensions:         extensions,
 		},
 		Threads: threads,
 		Shared: Shared{
