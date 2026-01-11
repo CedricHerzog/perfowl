@@ -12,14 +12,16 @@ import (
 
 // TempProfileFile creates a temporary JSON profile file and returns its path.
 // The file is automatically cleaned up when the test finishes.
-func TempProfileFile(t *testing.T, profile *parser.Profile) string {
+// Works with both *testing.T and *testing.B.
+func TempProfileFile(t testing.TB, profile *parser.Profile) string {
 	t.Helper()
 	return TempJSONFile(t, profile, "profile.json")
 }
 
 // TempGzipProfileFile creates a temporary gzip-compressed JSON profile file.
 // The file is automatically cleaned up when the test finishes.
-func TempGzipProfileFile(t *testing.T, profile *parser.Profile) string {
+// Works with both *testing.T and *testing.B.
+func TempGzipProfileFile(t testing.TB, profile *parser.Profile) string {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "profile.json.gz")
@@ -43,7 +45,8 @@ func TempGzipProfileFile(t *testing.T, profile *parser.Profile) string {
 
 // TempJSONFile creates a temporary JSON file with the given content.
 // The file is automatically cleaned up when the test finishes.
-func TempJSONFile(t *testing.T, content interface{}, filename string) string {
+// Works with both *testing.T and *testing.B.
+func TempJSONFile(t testing.TB, content interface{}, filename string) string {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, filename)
@@ -62,7 +65,8 @@ func TempJSONFile(t *testing.T, content interface{}, filename string) string {
 
 // TempGzipJSONFile creates a temporary gzip-compressed JSON file.
 // The file is automatically cleaned up when the test finishes.
-func TempGzipJSONFile(t *testing.T, content interface{}, filename string) string {
+// Works with both *testing.T and *testing.B.
+func TempGzipJSONFile(t testing.TB, content interface{}, filename string) string {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, filename)
@@ -86,7 +90,8 @@ func TempGzipJSONFile(t *testing.T, content interface{}, filename string) string
 
 // TempTextFile creates a temporary text file with the given content.
 // The file is automatically cleaned up when the test finishes.
-func TempTextFile(t *testing.T, content string, filename string) string {
+// Works with both *testing.T and *testing.B.
+func TempTextFile(t testing.TB, content string, filename string) string {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, filename)
@@ -100,16 +105,40 @@ func TempTextFile(t *testing.T, content string, filename string) string {
 
 // TempChromeProfile creates a temporary Chrome profile file.
 // The file is automatically cleaned up when the test finishes.
-func TempChromeProfile(t *testing.T, profile *parser.ChromeProfile) string {
+// Works with both *testing.T and *testing.B.
+func TempChromeProfile(t testing.TB, data []byte) string {
 	t.Helper()
-	return TempJSONFile(t, profile, "chrome-profile.json")
+	dir := t.TempDir()
+	path := filepath.Join(dir, "chrome-profile.json")
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		t.Fatalf("failed to write file: %v", err)
+	}
+	return path
 }
 
 // TempGzipChromeProfile creates a temporary gzip-compressed Chrome profile file.
 // The file is automatically cleaned up when the test finishes.
-func TempGzipChromeProfile(t *testing.T, profile *parser.ChromeProfile) string {
+// Works with both *testing.T and *testing.B.
+func TempGzipChromeProfile(t testing.TB, data []byte) string {
 	t.Helper()
-	return TempGzipJSONFile(t, profile, "chrome-profile.json.gz")
+	dir := t.TempDir()
+	path := filepath.Join(dir, "chrome-profile.json.gz")
+
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	defer f.Close()
+
+	gw := gzip.NewWriter(f)
+	if _, err := gw.Write(data); err != nil {
+		t.Fatalf("failed to write gzip data: %v", err)
+	}
+	if err := gw.Close(); err != nil {
+		t.Fatalf("failed to close gzip writer: %v", err)
+	}
+
+	return path
 }
 
 // MinimalChromeProfile returns a minimal valid Chrome profile.
@@ -145,13 +174,15 @@ func ChromeProfileWithEvents(events []parser.ChromeEvent) *parser.ChromeProfile 
 
 // TempDir creates a temporary directory and returns its path.
 // The directory is automatically cleaned up when the test finishes.
-func TempDir(t *testing.T) string {
+// Works with both *testing.T and *testing.B.
+func TempDir(t testing.TB) string {
 	t.Helper()
 	return t.TempDir()
 }
 
 // WriteFile writes content to a file at the given path.
-func WriteFile(t *testing.T, path string, content []byte) {
+// Works with both *testing.T and *testing.B.
+func WriteFile(t testing.TB, path string, content []byte) {
 	t.Helper()
 	if err := os.WriteFile(path, content, 0644); err != nil {
 		t.Fatalf("failed to write file %s: %v", path, err)
@@ -159,7 +190,8 @@ func WriteFile(t *testing.T, path string, content []byte) {
 }
 
 // ReadFile reads and returns the content of a file.
-func ReadFile(t *testing.T, path string) []byte {
+// Works with both *testing.T and *testing.B.
+func ReadFile(t testing.TB, path string) []byte {
 	t.Helper()
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -175,7 +207,8 @@ func FileExists(path string) bool {
 }
 
 // AssertFileExists fails the test if the file doesn't exist.
-func AssertFileExists(t *testing.T, path string) {
+// Works with both *testing.T and *testing.B.
+func AssertFileExists(t testing.TB, path string) {
 	t.Helper()
 	if !FileExists(path) {
 		t.Errorf("expected file to exist: %s", path)
@@ -183,7 +216,8 @@ func AssertFileExists(t *testing.T, path string) {
 }
 
 // AssertFileNotExists fails the test if the file exists.
-func AssertFileNotExists(t *testing.T, path string) {
+// Works with both *testing.T and *testing.B.
+func AssertFileNotExists(t testing.TB, path string) {
 	t.Helper()
 	if FileExists(path) {
 		t.Errorf("expected file to not exist: %s", path)
@@ -191,7 +225,8 @@ func AssertFileNotExists(t *testing.T, path string) {
 }
 
 // AssertFileContains fails the test if the file doesn't contain the substring.
-func AssertFileContains(t *testing.T, path, substring string) {
+// Works with both *testing.T and *testing.B.
+func AssertFileContains(t testing.TB, path, substring string) {
 	t.Helper()
 	content := string(ReadFile(t, path))
 	if !contains(content, substring) {

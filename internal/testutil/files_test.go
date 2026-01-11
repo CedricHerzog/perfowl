@@ -56,8 +56,8 @@ func TestTempTextFile(t *testing.T) {
 }
 
 func TestTempChromeProfile(t *testing.T) {
-	profile := MinimalChromeProfile()
-	path := TempChromeProfile(t, profile)
+	data := ChromeTraceWithNEvents(10)
+	path := TempChromeProfile(t, data)
 
 	if !FileExists(path) {
 		t.Errorf("expected file to exist: %s", path)
@@ -65,8 +65,8 @@ func TestTempChromeProfile(t *testing.T) {
 }
 
 func TestTempGzipChromeProfile(t *testing.T) {
-	profile := MinimalChromeProfile()
-	path := TempGzipChromeProfile(t, profile)
+	data := ChromeTraceWithNEvents(10)
+	path := TempGzipChromeProfile(t, data)
 
 	if !FileExists(path) {
 		t.Errorf("expected file to exist: %s", path)
