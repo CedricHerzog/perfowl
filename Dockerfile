@@ -1,6 +1,9 @@
 # Build stage
 FROM golang:1.23-alpine AS builder
 
+# Version should match internal/version/version.go
+ARG VERSION=1.0.0
+
 WORKDIR /app
 
 # Install git for fetching dependencies
@@ -19,6 +22,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o perfowl .
 # Runtime stage
 FROM alpine:latest
 
+ARG VERSION=1.0.0
+
 # Add ca-certificates for HTTPS and timezone data
 RUN apk --no-cache add ca-certificates tzdata
 
@@ -36,5 +41,5 @@ ENTRYPOINT ["perfowl", "mcp"]
 # Labels for Docker MCP Toolkit
 LABEL org.opencontainers.image.title="PerfOwl MCP"
 LABEL org.opencontainers.image.description="MCP server for browser performance trace analysis - Optimization Workbench & Lab"
-LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.version="${VERSION}"
 LABEL mcp.tool="true"

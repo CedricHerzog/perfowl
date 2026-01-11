@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/CedricHerzog/perfowl/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -14,8 +15,9 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "perfowl",
-	Short: "PerfOwl - Optimization Workbench & Lab for browser performance traces",
+	Use:     "perfowl",
+	Version: version.Version,
+	Short:   "PerfOwl - Optimization Workbench & Lab for browser performance traces",
 	Long: `PerfOwl (Optimization Workbench & Lab) - A wise tool for analyzing browser
 profiler exports to identify performance bottlenecks and provide AI-friendly insights.
 
