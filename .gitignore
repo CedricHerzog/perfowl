@@ -39,3 +39,16 @@ __debug_bin*
 # Coverage
 coverage.out
 coverage.html
+
+# AI tools
+.claude/
+.cursor/
+.aider*/
+.codeium/
+.continue/
+.copilot/
+.tabnine/
+CLAUDE.md
+.cursorrules
+.cursorignore
+.aiderignore
