@@ -51,7 +51,7 @@ func DetectBrowserType(path string) (BrowserType, error) {
 	if err != nil {
 		return BrowserUnknown, fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var reader io.Reader = file
 
@@ -62,7 +62,7 @@ func DetectBrowserType(path string) (BrowserType, error) {
 		if err != nil {
 			return BrowserUnknown, fmt.Errorf("failed to create gzip reader: %w", err)
 		}
-		defer gzReader.Close()
+		defer func() { _ = gzReader.Close() }()
 		reader = gzReader
 	}
 

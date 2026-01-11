@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -98,6 +99,12 @@ func ExtractMarkers(thread *Thread, categories []Category) []ParsedMarker {
 				if typeStr, ok := data["type"].(string); ok {
 					marker.Type = MarkerType(typeStr)
 				}
+				// Fall back to data.name if marker.Name is empty (common for UserTiming markers in Firefox)
+				if marker.Name == "" {
+					if dataName, ok := data["name"].(string); ok {
+						marker.Name = dataName
+					}
+				}
 			}
 		}
 
@@ -139,6 +146,18 @@ func FilterMarkersByDuration(markers []ParsedMarker, minMs float64) []ParsedMark
 	var filtered []ParsedMarker
 	for _, m := range markers {
 		if m.Duration >= minMs {
+			filtered = append(filtered, m)
+		}
+	}
+	return filtered
+}
+
+// FilterMarkersByName returns markers whose name contains the pattern (case-insensitive)
+func FilterMarkersByName(markers []ParsedMarker, pattern string) []ParsedMarker {
+	var filtered []ParsedMarker
+	patternLower := strings.ToLower(pattern)
+	for _, m := range markers {
+		if strings.Contains(strings.ToLower(m.Name), patternLower) {
 			filtered = append(filtered, m)
 		}
 	}

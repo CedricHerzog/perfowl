@@ -271,11 +271,11 @@ func TestLoadChromeProfile_Gzip(t *testing.T) {
 
 	gzWriter := gzip.NewWriter(f)
 	if _, err := gzWriter.Write(data); err != nil {
-		f.Close()
+		_ = f.Close()
 		t.Fatalf("Failed to write gzip data: %v", err)
 	}
-	gzWriter.Close()
-	f.Close()
+	_ = gzWriter.Close()
+	_ = f.Close()
 
 	profile, err := LoadChromeProfile(profilePath)
 	if err != nil {

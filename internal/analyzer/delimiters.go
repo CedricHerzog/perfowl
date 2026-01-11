@@ -97,8 +97,8 @@ func isDelimiterMarker(m parser.ParsedMarker) bool {
 		return true
 	}
 
-	// Check by category - include Layout and Graphics categories
-	if m.Category == "Layout" || m.Category == "Graphics" || m.Category == "DOM" {
+	// Check by category - include Layout, Graphics, DOM, and UserTiming categories
+	if m.Category == "Layout" || m.Category == "Graphics" || m.Category == "DOM" || m.Category == "UserTiming" {
 		return true
 	}
 

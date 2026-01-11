@@ -434,6 +434,103 @@ func TestFilterMarkersByDuration_Empty(t *testing.T) {
 	}
 }
 
+func TestFilterMarkersByName_Match(t *testing.T) {
+	markers := []ParsedMarker{
+		{Name: "perfowl-login-start"},
+		{Name: "perfowl-resources-decrypted"},
+		{Name: "other-marker"},
+		{Name: "perfowl-uppercase"},
+	}
+
+	filtered := FilterMarkersByName(markers, "perfowl")
+	if len(filtered) != 3 {
+		t.Errorf("expected 3 markers matching 'perfowl', got %d", len(filtered))
+	}
+}
+
+func TestFilterMarkersByName_CaseInsensitive(t *testing.T) {
+	markers := []ParsedMarker{
+		{Name: "LoginStart"},
+		{Name: "loginEnd"},
+		{Name: "LOGINCHECK"},
+		{Name: "other"},
+	}
+
+	filtered := FilterMarkersByName(markers, "LOGIN")
+	if len(filtered) != 3 {
+		t.Errorf("expected 3 markers matching 'LOGIN' (case-insensitive), got %d", len(filtered))
+	}
+}
+
+func TestFilterMarkersByName_NoMatch(t *testing.T) {
+	markers := []ParsedMarker{
+		{Name: "marker-one"},
+		{Name: "marker-two"},
+	}
+
+	filtered := FilterMarkersByName(markers, "nonexistent")
+	if len(filtered) != 0 {
+		t.Errorf("expected 0 markers, got %d", len(filtered))
+	}
+}
+
+func TestFilterMarkersByName_Empty(t *testing.T) {
+	var markers []ParsedMarker
+	filtered := FilterMarkersByName(markers, "test")
+	if len(filtered) != 0 {
+		t.Errorf("expected 0 markers, got %d", len(filtered))
+	}
+}
+
+func TestFilterMarkersByName_SubstringMatch(t *testing.T) {
+	markers := []ParsedMarker{
+		{Name: "performance.mark:app-ready"},
+		{Name: "app-startup"},
+		{Name: "app-shutdown"},
+	}
+
+	filtered := FilterMarkersByName(markers, "app")
+	if len(filtered) != 3 {
+		t.Errorf("expected 3 markers matching 'app', got %d", len(filtered))
+	}
+}
+
+func TestExtractMarkers_UserTimingNameFromData(t *testing.T) {
+	// UserTiming markers in Firefox have empty Name but name in Data.name
+	data, _ := json.Marshal(map[string]interface{}{
+		"type":      "UserTiming",
+		"name":      "perfowl-login-start",
+		"entryType": "mark",
+	})
+	thread := &Thread{
+		Name:        "GeckoMain",
+		PID:         "1",
+		StringArray: []string{""}, // Empty name in string array
+		Markers: Markers{
+			Length:    1,
+			Name:      []int{0},
+			Category:  []int{0},
+			StartTime: []float64{100.0},
+			EndTime:   []interface{}{nil},
+			Phase:     []int{0},
+			Data:      []json.RawMessage{data},
+		},
+	}
+	categories := []Category{{Name: "DOM", Color: "blue"}}
+
+	markers := ExtractMarkers(thread, categories)
+	if len(markers) != 1 {
+		t.Fatalf("expected 1 marker, got %d", len(markers))
+	}
+
+	if markers[0].Name != "perfowl-login-start" {
+		t.Errorf("Name = %q, want 'perfowl-login-start' (from Data.name)", markers[0].Name)
+	}
+	if markers[0].Type != MarkerTypeUserTiming {
+		t.Errorf("Type = %v, want UserTiming", markers[0].Type)
+	}
+}
+
 func TestGetMarkerStats_Empty(t *testing.T) {
 	var markers []ParsedMarker
 	stats := GetMarkerStats(markers)
