@@ -45,8 +45,8 @@ func init() {
 	measureCmd.Flags().StringVarP(&startPattern, "start", "s", "", "Pattern for start marker (required)")
 	measureCmd.Flags().StringVarP(&endPattern, "end", "e", "", "Pattern for end marker (required)")
 	measureCmd.Flags().BoolVarP(&findLast, "find-last", "L", false, "Find the last matching end marker instead of first")
-	measureCmd.MarkFlagRequired("start")
-	measureCmd.MarkFlagRequired("end")
+	_ = measureCmd.MarkFlagRequired("start")
+	_ = measureCmd.MarkFlagRequired("end")
 }
 
 type MeasureOutput struct {

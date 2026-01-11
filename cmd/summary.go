@@ -8,6 +8,8 @@ import (
 
 	"github.com/CedricHerzog/perfowl/internal/parser"
 	"github.com/spf13/cobra"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var summaryCmd = &cobra.Command{
@@ -107,7 +109,7 @@ func outputJSON(summary ProfileSummary) error {
 func outputMarkdown(summary ProfileSummary) error {
 	md := strings.Builder{}
 
-	browserName := strings.Title(summary.BrowserType)
+	browserName := cases.Title(language.English).String(summary.BrowserType)
 	if browserName == "" {
 		browserName = "Browser"
 	}
@@ -143,7 +145,7 @@ func outputMarkdown(summary ProfileSummary) error {
 }
 
 func outputText(summary ProfileSummary) error {
-	browserName := strings.Title(summary.BrowserType)
+	browserName := cases.Title(language.English).String(summary.BrowserType)
 	if browserName == "" {
 		browserName = "Browser"
 	}

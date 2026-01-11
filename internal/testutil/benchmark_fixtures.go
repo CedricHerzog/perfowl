@@ -84,7 +84,7 @@ func ScaledProfile(sampleCount, markerCount, workerCount int) *parser.Profile {
 
 	// Build profile with main thread
 	pb := NewProfileBuilder().
-		WithDuration(float64(sampleCount * 2)).
+		WithDuration(float64(sampleCount*2)).
 		WithCategories(DefaultCategories()).
 		WithExtension("ext1@example.com", "Test Extension 1", "moz-extension://abc123/").
 		WithExtension("ext2@example.com", "Test Extension 2", "moz-extension://def456/")

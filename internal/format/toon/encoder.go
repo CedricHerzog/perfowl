@@ -92,7 +92,7 @@ func (e *encoder) encodePrimitive(sb *strings.Builder, v reflect.Value, depth in
 			sb.WriteString("false")
 		}
 	default:
-		sb.WriteString(fmt.Sprintf("%v", v.Interface()))
+		fmt.Fprintf(sb, "%v", v.Interface())
 	}
 
 	if fieldName != "" {
@@ -198,7 +198,7 @@ func (e *encoder) encodeSlice(sb *strings.Builder, v reflect.Value, depth int, f
 	if fieldName != "" {
 		sb.WriteString(prefix)
 		sb.WriteString(fieldName)
-		sb.WriteString(fmt.Sprintf("[%d]:\n", length))
+		fmt.Fprintf(sb, "[%d]:\n", length)
 		depth++
 	}
 
@@ -239,7 +239,7 @@ func (e *encoder) encodeTabular(sb *strings.Builder, v reflect.Value, depth int,
 	if fieldName != "" {
 		sb.WriteString(fieldName)
 	}
-	sb.WriteString(fmt.Sprintf("[%d]{%s}:\n", length, strings.Join(fieldNames, ",")))
+	fmt.Fprintf(sb, "[%d]{%s}:\n", length, strings.Join(fieldNames, ","))
 
 	// Write rows
 	rowPrefix := e.prefix + strings.Repeat(e.indent, depth+1)
@@ -280,7 +280,7 @@ func (e *encoder) encodeSimpleArray(sb *strings.Builder, v reflect.Value, depth 
 	if fieldName != "" {
 		sb.WriteString(fieldName)
 	}
-	sb.WriteString(fmt.Sprintf("[%d]: %s\n", length, strings.Join(values, ",")))
+	fmt.Fprintf(sb, "[%d]: %s\n", length, strings.Join(values, ","))
 	return nil
 }
 

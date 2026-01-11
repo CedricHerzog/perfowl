@@ -36,7 +36,8 @@ func TestAssertNotEqual_Pass(t *testing.T) {
 
 func TestAssertTrue_Pass(t *testing.T) {
 	AssertTrue(t, true, "should be true")
-	AssertTrue(t, 1 == 1, "1 equals 1")
+	one := 1
+	AssertTrue(t, one == 1, "1 equals 1")
 }
 
 func TestAssertFalse_Pass(t *testing.T) {

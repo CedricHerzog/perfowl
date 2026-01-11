@@ -772,9 +772,7 @@ func (pos *PerfOwlServer) handleGetDelimiterMarkers(ctx context.Context, req mcp
 
 	var categories []string
 	if cats, err := req.RequireString("categories"); err == nil && cats != "" {
-		for _, c := range splitAndTrim(cats) {
-			categories = append(categories, c)
-		}
+		categories = append(categories, splitAndTrim(cats)...)
 	}
 
 	limit := 0

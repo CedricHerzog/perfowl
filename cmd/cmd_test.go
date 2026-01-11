@@ -205,7 +205,7 @@ func TestRootCmd_Flags(t *testing.T) {
 	// Test that persistent flags are defined
 	flag := rootCmd.PersistentFlags().Lookup("profile")
 	if flag == nil {
-		t.Error("expected 'profile' flag to be defined")
+		t.Fatal("expected 'profile' flag to be defined")
 	}
 	if flag.Shorthand != "p" {
 		t.Errorf("profile flag shorthand = %s, want 'p'", flag.Shorthand)
@@ -213,7 +213,7 @@ func TestRootCmd_Flags(t *testing.T) {
 
 	flag = rootCmd.PersistentFlags().Lookup("output")
 	if flag == nil {
-		t.Error("expected 'output' flag to be defined")
+		t.Fatal("expected 'output' flag to be defined")
 	}
 	if flag.Shorthand != "o" {
 		t.Errorf("output flag shorthand = %s, want 'o'", flag.Shorthand)
@@ -221,7 +221,7 @@ func TestRootCmd_Flags(t *testing.T) {
 
 	flag = rootCmd.PersistentFlags().Lookup("browser")
 	if flag == nil {
-		t.Error("expected 'browser' flag to be defined")
+		t.Fatal("expected 'browser' flag to be defined")
 	}
 	if flag.Shorthand != "b" {
 		t.Errorf("browser flag shorthand = %s, want 'b'", flag.Shorthand)
@@ -289,23 +289,23 @@ func TestRunSummary_InvalidProfile(t *testing.T) {
 
 func TestOutputFunctions_NoPanic(t *testing.T) {
 	summary := ProfileSummary{
-		BrowserType:    "firefox",
-		Duration:       5.0,
-		Platform:       "Linux",
-		OSCPU:          "x86_64",
-		Product:        "Firefox",
-		BuildID:        "123",
-		CPUName:        "Intel",
-		PhysicalCPUs:   4,
-		LogicalCPUs:    8,
-		ThreadCount:    5,
+		BrowserType:     "firefox",
+		Duration:        5.0,
+		Platform:        "Linux",
+		OSCPU:           "x86_64",
+		Product:         "Firefox",
+		BuildID:         "123",
+		CPUName:         "Intel",
+		PhysicalCPUs:    4,
+		LogicalCPUs:     8,
+		ThreadCount:     5,
 		MainThreadCount: 1,
-		ExtensionCount: 1,
-		Extensions:     map[string]string{"ext1@test.com": "Test Extension"},
-		Features:       []string{"js", "screenshots"},
-		Categories:     []string{"JavaScript"},
-		TotalMarkers:   100,
-		TotalSamples:   1000,
+		ExtensionCount:  1,
+		Extensions:      map[string]string{"ext1@test.com": "Test Extension"},
+		Features:        []string{"js", "screenshots"},
+		Categories:      []string{"JavaScript"},
+		TotalMarkers:    100,
+		TotalSamples:    1000,
 	}
 
 	// These should not panic

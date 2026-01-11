@@ -166,7 +166,7 @@ func ProfileWithSyncIPC() *parser.Profile {
 func ProfileWithNetworkBlocking() *parser.Profile {
 	mb := NewMarkerBuilder()
 	mb.AddNetwork("https://slow.example.com/api", 0, 2000). // 2s - blocking
-									AddNetwork("https://fast.example.com/api", 100, 100) // 100ms - ok
+								AddNetwork("https://fast.example.com/api", 100, 100) // 100ms - ok
 	markers, strings := mb.Build()
 
 	return NewProfileBuilder().
@@ -185,16 +185,16 @@ func ProfileWithNetworkBlocking() *parser.Profile {
 func ProfileWithCrypto() *parser.Profile {
 	// Build string array with crypto function names that trigger detection
 	strings := []string{
-		"SubtleCrypto.encrypt",      // 0 - triggers encrypt operation
-		"SubtleCrypto.decrypt",      // 1 - triggers decrypt operation
-		"SubtleCrypto.digest",       // 2 - triggers digest operation
-		"AES-GCM-encrypt",           // 3 - triggers AES algorithm
-		"SHA-256-digest",            // 4 - triggers SHA-256 algorithm
-		"SHA-1-hash",                // 5 - triggers SHA-1 (warning)
-		"crypto.js",                 // 6 - resource name
-		"MD5-checksum",              // 7 - triggers MD5 (warning)
-		"SubtleCrypto.generateKey",  // 8 - triggers generateKey
-		"PBKDF2-deriveKey",          // 9 - triggers key derivation
+		"SubtleCrypto.encrypt",     // 0 - triggers encrypt operation
+		"SubtleCrypto.decrypt",     // 1 - triggers decrypt operation
+		"SubtleCrypto.digest",      // 2 - triggers digest operation
+		"AES-GCM-encrypt",          // 3 - triggers AES algorithm
+		"SHA-256-digest",           // 4 - triggers SHA-256 algorithm
+		"SHA-1-hash",               // 5 - triggers SHA-1 (warning)
+		"crypto.js",                // 6 - resource name
+		"MD5-checksum",             // 7 - triggers MD5 (warning)
+		"SubtleCrypto.generateKey", // 8 - triggers generateKey
+		"PBKDF2-deriveKey",         // 9 - triggers key derivation
 	}
 
 	// Build stack table - each stack points to a frame
@@ -223,15 +223,15 @@ func ProfileWithCrypto() *parser.Profile {
 	sb := NewSamplesBuilder()
 	// 30 samples each for different operations (each 5ms = 150ms total for warnings)
 	for i := 0; i < 30; i++ {
-		sb.AddSampleWithCPUDelta(0, float64(i*10), 5000)    // encrypt
-		sb.AddSampleWithCPUDelta(1, float64(i*10+1), 5000)  // decrypt
-		sb.AddSampleWithCPUDelta(2, float64(i*10+2), 5000)  // digest
-		sb.AddSampleWithCPUDelta(3, float64(i*10+3), 5000)  // AES
-		sb.AddSampleWithCPUDelta(4, float64(i*10+4), 5000)  // SHA-256
-		sb.AddSampleWithCPUDelta(5, float64(i*10+5), 5000)  // SHA-1
-		sb.AddSampleWithCPUDelta(7, float64(i*10+6), 5000)  // MD5
-		sb.AddSampleWithCPUDelta(8, float64(i*10+7), 5000)  // generateKey
-		sb.AddSampleWithCPUDelta(9, float64(i*10+8), 5000)  // PBKDF2
+		sb.AddSampleWithCPUDelta(0, float64(i*10), 5000)   // encrypt
+		sb.AddSampleWithCPUDelta(1, float64(i*10+1), 5000) // decrypt
+		sb.AddSampleWithCPUDelta(2, float64(i*10+2), 5000) // digest
+		sb.AddSampleWithCPUDelta(3, float64(i*10+3), 5000) // AES
+		sb.AddSampleWithCPUDelta(4, float64(i*10+4), 5000) // SHA-256
+		sb.AddSampleWithCPUDelta(5, float64(i*10+5), 5000) // SHA-1
+		sb.AddSampleWithCPUDelta(7, float64(i*10+6), 5000) // MD5
+		sb.AddSampleWithCPUDelta(8, float64(i*10+7), 5000) // generateKey
+		sb.AddSampleWithCPUDelta(9, float64(i*10+8), 5000) // PBKDF2
 	}
 
 	return NewProfileBuilder().
@@ -278,11 +278,11 @@ func ProfileWithJSCrypto() *parser.Profile {
 	// Build function table with file references
 	fnb := NewFuncTableBuilder()
 	fnb.AddFuncWithFile(0, true, 0, 3, 100). // decryptWithSessionKey in openpgp.min.js
-						AddFuncWithFile(1, true, 0, 3, 200). // SEIPDPacket in openpgp.min.js
-						AddFuncWithFile(2, true, 0, 3, 300). // processPacket in openpgp.min.js
-						AddFuncWithFile(4, true, 0, 3, 400). // encryptMessage in openpgp.min.js
-						AddFuncWithFile(5, true, 1, 6, 100). // armored_decrypt in seipdDecryptWorker.js
-						AddFunc(3, true, 0)                  // placeholder
+							AddFuncWithFile(1, true, 0, 3, 200). // SEIPDPacket in openpgp.min.js
+							AddFuncWithFile(2, true, 0, 3, 300). // processPacket in openpgp.min.js
+							AddFuncWithFile(4, true, 0, 3, 400). // encryptMessage in openpgp.min.js
+							AddFuncWithFile(5, true, 1, 6, 100). // armored_decrypt in seipdDecryptWorker.js
+							AddFunc(3, true, 0)                  // placeholder
 
 	// Build resource tables - two resources for different crypto workers
 	rtb := NewResourceTableBuilder()
@@ -585,11 +585,11 @@ func ProfileWithBottlenecks() *parser.Profile {
 func ProfileWithExtensionActivity() *parser.Profile {
 	// String array with extension-related URLs
 	strings := []string{
-		"extensionFunction",                      // 0
-		"handleMessage",                          // 1
-		"moz-extension://ext123/background.js",   // 2 - extension resource
-		"chrome-extension://ext456/content.js",   // 3 - chrome extension resource
-		"processExtensionData",                   // 4
+		"extensionFunction",                    // 0
+		"handleMessage",                        // 1
+		"moz-extension://ext123/background.js", // 2 - extension resource
+		"chrome-extension://ext456/content.js", // 3 - chrome extension resource
+		"processExtensionData",                 // 4
 	}
 
 	// Build stack table

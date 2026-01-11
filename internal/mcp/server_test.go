@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -80,7 +81,7 @@ func TestNewServer(t *testing.T) {
 	server := NewServer()
 
 	if server == nil {
-		t.Error("expected non-nil server")
+		t.Fatal("expected non-nil server")
 	}
 	if server.server == nil {
 		t.Error("expected non-nil internal MCP server")
@@ -301,7 +302,7 @@ func TestHandleGetSummary_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleGetSummary(nil, req)
+	result, err := server.handleGetSummary(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetSummary error: %v", err)
@@ -315,7 +316,7 @@ func TestHandleGetSummary_MissingPath(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{})
 
-	_, err := server.handleGetSummary(nil, req)
+	_, err := server.handleGetSummary(context.TODO(), req)
 
 	if err == nil {
 		t.Error("expected error for missing path")
@@ -329,7 +330,7 @@ func TestHandleGetSummary_FileNotFound(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": "/nonexistent/profile.json"})
 
-	_, err := server.handleGetSummary(nil, req)
+	_, err := server.handleGetSummary(context.TODO(), req)
 
 	if err == nil {
 		t.Error("expected error for file not found")
@@ -346,7 +347,7 @@ func TestHandleGetBottlenecks_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleGetBottlenecks(nil, req)
+	result, err := server.handleGetBottlenecks(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetBottlenecks error: %v", err)
@@ -366,7 +367,7 @@ func TestHandleGetBottlenecks_WithSeverityFilter(t *testing.T) {
 		"min_severity": "high",
 	})
 
-	result, err := server.handleGetBottlenecks(nil, req)
+	result, err := server.handleGetBottlenecks(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetBottlenecks error: %v", err)
@@ -395,7 +396,7 @@ func TestHandleGetMarkers_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleGetMarkers(nil, req)
+	result, err := server.handleGetMarkers(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetMarkers error: %v", err)
@@ -431,7 +432,7 @@ func TestHandleGetMarkers_WithFilters(t *testing.T) {
 		"limit":        float64(10),
 	})
 
-	result, err := server.handleGetMarkers(nil, req)
+	result, err := server.handleGetMarkers(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetMarkers error: %v", err)
@@ -448,7 +449,7 @@ func TestHandleAnalyzeExtension_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleAnalyzeExtension(nil, req)
+	result, err := server.handleAnalyzeExtension(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleAnalyzeExtension error: %v", err)
@@ -468,7 +469,7 @@ func TestHandleAnalyzeExtension_WithFilter(t *testing.T) {
 		"extension_id": "ext1@test.com",
 	})
 
-	result, err := server.handleAnalyzeExtension(nil, req)
+	result, err := server.handleAnalyzeExtension(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleAnalyzeExtension error: %v", err)
@@ -485,7 +486,7 @@ func TestHandleAnalyzeProfile_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleAnalyzeProfile(nil, req)
+	result, err := server.handleAnalyzeProfile(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleAnalyzeProfile error: %v", err)
@@ -502,7 +503,7 @@ func TestHandleGetCallTree_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleGetCallTree(nil, req)
+	result, err := server.handleGetCallTree(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetCallTree error: %v", err)
@@ -523,7 +524,7 @@ func TestHandleGetCallTree_WithThreadFilter(t *testing.T) {
 		"limit":  float64(10),
 	})
 
-	result, err := server.handleGetCallTree(nil, req)
+	result, err := server.handleGetCallTree(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetCallTree error: %v", err)
@@ -540,7 +541,7 @@ func TestHandleGetCategoryBreakdown_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleGetCategoryBreakdown(nil, req)
+	result, err := server.handleGetCategoryBreakdown(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetCategoryBreakdown error: %v", err)
@@ -560,7 +561,7 @@ func TestHandleGetCategoryBreakdown_WithThreadFilter(t *testing.T) {
 		"thread": "GeckoMain",
 	})
 
-	result, err := server.handleGetCategoryBreakdown(nil, req)
+	result, err := server.handleGetCategoryBreakdown(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetCategoryBreakdown error: %v", err)
@@ -577,7 +578,7 @@ func TestHandleGetThreadAnalysis_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleGetThreadAnalysis(nil, req)
+	result, err := server.handleGetThreadAnalysis(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetThreadAnalysis error: %v", err)
@@ -599,7 +600,7 @@ func TestHandleCompareProfiles_Success(t *testing.T) {
 		"comparison": path2,
 	})
 
-	result, err := server.handleCompareProfiles(nil, req)
+	result, err := server.handleCompareProfiles(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleCompareProfiles error: %v", err)
@@ -615,7 +616,7 @@ func TestHandleCompareProfiles_MissingBaseline(t *testing.T) {
 		"comparison": "/some/path.json",
 	})
 
-	_, err := server.handleCompareProfiles(nil, req)
+	_, err := server.handleCompareProfiles(context.TODO(), req)
 
 	if err == nil {
 		t.Error("expected error for missing baseline")
@@ -634,7 +635,7 @@ func TestHandleCompareProfiles_MissingComparison(t *testing.T) {
 		"baseline": path,
 	})
 
-	_, err := server.handleCompareProfiles(nil, req)
+	_, err := server.handleCompareProfiles(context.TODO(), req)
 
 	if err == nil {
 		t.Error("expected error for missing comparison")
@@ -651,7 +652,7 @@ func TestHandleAnalyzeWorkers_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleAnalyzeWorkers(nil, req)
+	result, err := server.handleAnalyzeWorkers(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleAnalyzeWorkers error: %v", err)
@@ -668,7 +669,7 @@ func TestHandleAnalyzeCrypto_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleAnalyzeCrypto(nil, req)
+	result, err := server.handleAnalyzeCrypto(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleAnalyzeCrypto error: %v", err)
@@ -685,7 +686,7 @@ func TestHandleAnalyzeJSCrypto_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleAnalyzeJSCrypto(nil, req)
+	result, err := server.handleAnalyzeJSCrypto(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleAnalyzeJSCrypto error: %v", err)
@@ -702,7 +703,7 @@ func TestHandleAnalyzeContention_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleAnalyzeContention(nil, req)
+	result, err := server.handleAnalyzeContention(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleAnalyzeContention error: %v", err)
@@ -719,7 +720,7 @@ func TestHandleAnalyzeScaling_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleAnalyzeScaling(nil, req)
+	result, err := server.handleAnalyzeScaling(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleAnalyzeScaling error: %v", err)
@@ -741,7 +742,7 @@ func TestHandleCompareScaling_Success(t *testing.T) {
 		"comparison": path2,
 	})
 
-	result, err := server.handleCompareScaling(nil, req)
+	result, err := server.handleCompareScaling(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleCompareScaling error: %v", err)
@@ -757,7 +758,7 @@ func TestHandleCompareScaling_MissingBaseline(t *testing.T) {
 		"comparison": "/some/path.json",
 	})
 
-	_, err := server.handleCompareScaling(nil, req)
+	_, err := server.handleCompareScaling(context.TODO(), req)
 
 	if err == nil {
 		t.Error("expected error for missing baseline")
@@ -772,7 +773,7 @@ func TestHandleBatchAnalyze_Success(t *testing.T) {
 	profilesJSON := `[{"path": "` + path + `", "workers": 2, "label": "Test"}]`
 	req := mockRequest(map[string]any{"profiles": profilesJSON})
 
-	result, err := server.handleBatchAnalyze(nil, req)
+	result, err := server.handleBatchAnalyze(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleBatchAnalyze error: %v", err)
@@ -786,7 +787,7 @@ func TestHandleBatchAnalyze_InvalidJSON(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"profiles": "invalid json"})
 
-	_, err := server.handleBatchAnalyze(nil, req)
+	_, err := server.handleBatchAnalyze(context.TODO(), req)
 
 	if err == nil {
 		t.Error("expected error for invalid JSON")
@@ -800,7 +801,7 @@ func TestHandleBatchAnalyze_EmptyProfiles(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"profiles": "[]"})
 
-	_, err := server.handleBatchAnalyze(nil, req)
+	_, err := server.handleBatchAnalyze(context.TODO(), req)
 
 	if err == nil {
 		t.Error("expected error for empty profiles")
@@ -822,7 +823,7 @@ func TestHandleGenerateChart_InlineMode(t *testing.T) {
 		"output":     "inline",
 	})
 
-	result, err := server.handleGenerateChart(nil, req)
+	result, err := server.handleGenerateChart(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGenerateChart error: %v", err)
@@ -849,7 +850,7 @@ func TestHandleGenerateChart_FileMode(t *testing.T) {
 		"output_path": outputPath,
 	})
 
-	result, err := server.handleGenerateChart(nil, req)
+	result, err := server.handleGenerateChart(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGenerateChart error: %v", err)
@@ -866,7 +867,7 @@ func TestHandleGetDelimiterMarkers_Success(t *testing.T) {
 	server := NewServer()
 	req := mockRequest(map[string]any{"path": path})
 
-	result, err := server.handleGetDelimiterMarkers(nil, req)
+	result, err := server.handleGetDelimiterMarkers(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetDelimiterMarkers error: %v", err)
@@ -887,7 +888,7 @@ func TestHandleGetDelimiterMarkers_WithFilters(t *testing.T) {
 		"limit":      float64(10),
 	})
 
-	result, err := server.handleGetDelimiterMarkers(nil, req)
+	result, err := server.handleGetDelimiterMarkers(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleGetDelimiterMarkers error: %v", err)
@@ -908,7 +909,7 @@ func TestHandleMeasureOperation_PatternBased(t *testing.T) {
 		"end_pattern":   "Paint",
 	})
 
-	result, err := server.handleMeasureOperation(nil, req)
+	result, err := server.handleMeasureOperation(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleMeasureOperation error: %v", err)
@@ -929,7 +930,7 @@ func TestHandleMeasureOperation_IndexBased(t *testing.T) {
 		"end_index":   float64(1),
 	})
 
-	result, err := server.handleMeasureOperation(nil, req)
+	result, err := server.handleMeasureOperation(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleMeasureOperation error: %v", err)
@@ -955,7 +956,7 @@ func TestHandleMeasureOperation_WithOptions(t *testing.T) {
 		"end_min_duration":   float64(0),
 	})
 
-	result, err := server.handleMeasureOperation(nil, req)
+	result, err := server.handleMeasureOperation(context.TODO(), req)
 
 	if err != nil {
 		t.Fatalf("handleMeasureOperation error: %v", err)
@@ -976,7 +977,7 @@ func TestHandleMeasureOperation_MissingPattern(t *testing.T) {
 		// missing end_pattern
 	})
 
-	_, err := server.handleMeasureOperation(nil, req)
+	_, err := server.handleMeasureOperation(context.TODO(), req)
 
 	if err == nil {
 		t.Error("expected error for missing end_pattern")
